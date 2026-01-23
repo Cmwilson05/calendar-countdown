@@ -1,0 +1,13 @@
+# IDEs
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Build outputs
+out/
+dist/
+
+# Local environment files
+.env
+.env.local
