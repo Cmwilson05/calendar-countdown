@@ -406,236 +406,7 @@ const COMMON_EMOJIS = [
     { char: '🦔', keywords: 'hedgehog', category: 'Animals' },
     { char: '🐾', keywords: 'paw prints', category: 'Animals' },
     { char: '🐉', keywords: 'dragon', category: 'Animals' },
-    { char: '🐲', keywords: 'dragon face', category: 'Animals' },
-    { char: '🌤️', keywords: 'partly sunny, sun, cloud, weather', category: 'Weather' },
-    { char: '⛅', keywords: 'sun, cloud, weather', category: 'Weather' },
-    { char: '🌥️', keywords: 'mostly cloudy, sun, cloud, weather', category: 'Weather' },
-    { char: '☁️', keywords: 'cloud, cloudy, weather', category: 'Weather' },
-    { char: '🌦️', keywords: 'sun, rain, weather', category: 'Weather' },
-    { char: '🌧️', keywords: 'rain, rainy, weather', category: 'Weather' },
-    { char: '⛈️', keywords: 'storm, thunder, rain, weather', category: 'Weather' },
-    { char: '🌩️', keywords: 'lightning, storm, weather', category: 'Weather' },
-    { char: '🌨️', keywords: 'snow, snowy, weather', category: 'Weather' },
-    { char: '❄️', keywords: 'snowflake, winter, cold, weather', category: 'Weather' },
-    { char: '🌬️', keywords: 'wind, windy, weather', category: 'Weather' },
-    { char: '💨', keywords: 'dash, fast, wind', category: 'Weather' },
-    { char: '🌪️', keywords: 'tornado, weather', category: 'Weather' },
-    { char: '🌫️', keywords: 'fog, foggy, weather', category: 'Weather' },
-    { char: '🌈', keywords: 'rainbow, weather, happy', category: 'Weather' },
-    { char: '☔', keywords: 'umbrella, rain, weather', category: 'Weather' },
-    { char: '⚡', keywords: 'voltage, lightning, energy', category: 'Weather' },
-    { char: '☄️', keywords: 'comet, space', category: 'Weather' },
-    { char: '🌙', keywords: 'moon, night, crescent', category: 'Weather' },
-    { char: '🌕', keywords: 'full moon, night', category: 'Weather' },
-    { char: '🌑', keywords: 'new moon', category: 'Weather' },
-    { char: '🌒', keywords: 'waxing crescent moon', category: 'Weather' },
-    { char: '🌓', keywords: 'first quarter moon', category: 'Weather' },
-    { char: '🌔', keywords: 'waxing gibbous moon', category: 'Weather' },
-    { char: '🌖', keywords: 'waning gibbous moon', category: 'Weather' },
-    { char: '🌗', keywords: 'last quarter moon', category: 'Weather' },
-    { char: '🌘', keywords: 'waning crescent moon', category: 'Weather' },
-    { char: '🌚', keywords: 'new moon face', category: 'Weather' },
-    { char: '🌛', keywords: 'first quarter moon face', category: 'Weather' },
-    { char: '🌜', keywords: 'last quarter moon face', category: 'Weather' },
-    { char: '🌝', keywords: 'full moon face', category: 'Weather' },
-    { char: '🌞', keywords: 'sun with face', category: 'Weather' },
-    { char: '🛍️', keywords: 'shopping, bags, mall, buy', category: 'Shopping' },
-    { char: '🛒', keywords: 'cart, shopping, grocery', category: 'Shopping' },
-    { char: '💰', keywords: 'money, cash, wealth', category: 'Shopping' },
-    { char: '💳', keywords: 'credit card, payment', category: 'Shopping' },
-    { char: '💵', keywords: 'dollar, money', category: 'Shopping' },
-    { char: '🏷️', keywords: 'tag, price, sale', category: 'Shopping' },
-    { char: '👗', keywords: 'dress, fashion, clothes', category: 'Shopping' },
-    { char: '👕', keywords: 'shirt, t-shirt, clothes', category: 'Shopping' },
-    { char: '👖', keywords: 'jeans, pants, clothes', category: 'Shopping' },
-    { char: '👠', keywords: 'heels, shoes, fashion', category: 'Shopping' },
-    { char: '👟', keywords: 'sneakers, shoes, sports', category: 'Shopping' },
-    { char: '👞', keywords: 'shoe, fashion', category: 'Shopping' },
-    { char: '👢', keywords: 'boot, fashion', category: 'Shopping' },
-    { char: '👒', keywords: 'hat, fashion', category: 'Shopping' },
-    { char: '🧢', keywords: 'cap, hat, fashion', category: 'Shopping' },
-    { char: '👜', keywords: 'handbag, fashion', category: 'Shopping' },
-    { char: '🕶️', keywords: 'sunglasses, cool', category: 'Shopping' },
-    { char: '💎', keywords: 'gem, diamond, jewelry', category: 'Shopping' },
-    { char: '💄', keywords: 'lipstick, makeup, beauty', category: 'Shopping' },
-    { char: '🎪', keywords: 'circus, fun', category: 'Hobbies' },
-    { char: '🎠', keywords: 'carousel, fun', category: 'Hobbies' },
-    { char: '🎮', keywords: 'gaming, play, controller', category: 'Hobbies' },
-    { char: '🎲', keywords: 'dice, game, board game', category: 'Hobbies' },
-    { char: '🧩', keywords: 'puzzle, game', category: 'Hobbies' },
-    { char: '♟️', keywords: 'chess, game', category: 'Hobbies' },
-    { char: '🃏', keywords: 'cards, game', category: 'Hobbies' },
-    { char: '🪵', keywords: 'wood, fire', category: 'Hobbies' },
-    { char: '🔨', keywords: 'hammer, diy, fix', category: 'Hobbies' },
-    { char: '🪚', keywords: 'saw, diy, wood', category: 'Hobbies' },
-    { char: '🔧', keywords: 'wrench, diy, fix', category: 'Hobbies' },
-    { char: '🪛', keywords: 'screwdriver, diy', category: 'Hobbies' },
-    { char: '🪀', keywords: 'yo-yo', category: 'Hobbies' },
-    { char: '🪁', keywords: 'kite', category: 'Hobbies' },
-    { char: '🎱', keywords: 'pool 8 ball', category: 'Hobbies' },
-    { char: '🔮', keywords: 'crystal ball', category: 'Hobbies' },
-    { char: '🧿', keywords: 'nazar amulet', category: 'Hobbies' },
-    { char: '🕹️', keywords: 'joystick', category: 'Hobbies' },
-    { char: '🎰', keywords: 'slot machine', category: 'Hobbies' },
-    { char: '🧸', keywords: 'teddy bear', category: 'Hobbies' },
-    { char: '🪅', keywords: 'piñata', category: 'Hobbies' },
-    { char: '🪩', keywords: 'mirror ball', category: 'Hobbies' },
-    { char: '🀄', keywords: 'mahjong red dragon', category: 'Hobbies' },
-    { char: '🎴', keywords: 'flower playing cards', category: 'Hobbies' },
-    { char: '👨‍👩‍👧‍👦', keywords: 'family, parents, kids', category: 'Family' },
-    { char: '👩‍❤️‍👨', keywords: 'couple, love', category: 'Family' },
-    { char: '👫', keywords: 'couple, friends', category: 'Family' },
-    { char: '👯', keywords: 'friends, party, dancers', category: 'Family' },
-    { char: '🫂', keywords: 'hug, support', category: 'Family' },
-    { char: '🤝', keywords: 'handshake, deal, meet', category: 'Family' },
-    { char: '👋', keywords: 'wave, hello', category: 'Family' },
-    { char: '👵', keywords: 'grandma, elderly', category: 'Family' },
-    { char: '👴', keywords: 'grandpa, elderly', category: 'Family' },
-    { char: '🧑‍💻', keywords: 'developer, tech, work', category: 'Family' },
-    { char: '🧑‍🍳', keywords: 'cook, chef, kitchen', category: 'Family' },
-    { char: '🧑‍🏫', keywords: 'teacher, school', category: 'Family' },
-    { char: '🧑‍🎨', keywords: 'artist, painting', category: 'Family' },
-    { char: '🧑‍🔬', keywords: 'scientist, lab', category: 'Family' },
-    { char: '🧑‍🚀', keywords: 'astronaut, space', category: 'Family' },
-    { char: '🦸', keywords: 'superhero, hero', category: 'Family' },
-    { char: '🥷', keywords: 'ninja, stealth', category: 'Family' },
-    { char: '📱', keywords: 'phone, mobile, tech', category: 'Tech' },
-    { char: '📷', keywords: 'camera, photo, memory, photography', category: 'Tech' },
-    { char: '🎥', keywords: 'movie, film, cinema', category: 'Tech' },
-    { char: '📺', keywords: 'tv, show, watch', category: 'Tech' },
-    { char: '🎵', keywords: 'music, song, concert, melody', category: 'Tech' },
-    { char: '🎸', keywords: 'guitar, music, instrument', category: 'Tech' },
-    { char: '🎹', keywords: 'piano, music', category: 'Tech' },
-    { char: '🎷', keywords: 'sax, music', category: 'Tech' },
-    { char: '🎺', keywords: 'trumpet, music', category: 'Tech' },
-    { char: '🎻', keywords: 'violin, music', category: 'Tech' },
-    { char: '🎧', keywords: 'headphones, music', category: 'Tech' },
-    { char: '📻', keywords: 'radio, music', category: 'Tech' },
-    { char: '📽️', keywords: 'projector, movie', category: 'Tech' },
-    { char: '🖱️', keywords: 'mouse, tech', category: 'Tech' },
-    { char: '⌨️', keywords: 'keyboard, tech', category: 'Tech' },
-    { char: '🔋', keywords: 'battery, tech', category: 'Tech' },
-    { char: '🎨', keywords: 'palette, art, painting', category: 'Art' },
-    { char: '🎭', keywords: 'drama, theater, arts', category: 'Art' },
-    { char: '🧵', keywords: 'thread, sewing, hobby', category: 'Art' },
-    { char: '🧶', keywords: 'yarn, knitting, hobby', category: 'Art' },
-    { char: '🖼️', keywords: 'framed picture', category: 'Art' },
-    { char: '🪡', keywords: 'sewing needle', category: 'Art' },
-    { char: '🪢', keywords: 'knot', category: 'Art' },
-    { char: '❤️', keywords: 'heart, love, like', category: 'Symbols' },
-    { char: '✨', keywords: 'sparkles, magic, new', category: 'Symbols' },
-    { char: '💡', keywords: 'idea, light, thinking', category: 'Symbols' },
-    { char: '🔔', keywords: 'reminder, notification', category: 'Symbols' },
-    { char: '🔒', keywords: 'private, lock, secure', category: 'Symbols' },
-    { char: '📍', keywords: 'location, place', category: 'Symbols' },
-    { char: '📌', keywords: 'pin, mark', category: 'Symbols' },
-    { char: '🔍', keywords: 'search, find', category: 'Symbols' },
-    { char: '⚙️', keywords: 'gear, settings', category: 'Symbols' },
-    { char: '🛠️', keywords: 'tools, fix', category: 'Symbols' },
-    { char: '🧱', keywords: 'brick, build', category: 'Symbols' },
-    { char: '🧡', keywords: 'orange heart', category: 'Symbols' },
-    { char: '💛', keywords: 'yellow heart', category: 'Symbols' },
-    { char: '💚', keywords: 'green heart', category: 'Symbols' },
-    { char: '💙', keywords: 'blue heart', category: 'Symbols' },
-    { char: '💜', keywords: 'purple heart', category: 'Symbols' },
-    { char: '🖤', keywords: 'black heart', category: 'Symbols' },
-    { char: '🤍', keywords: 'white heart', category: 'Symbols' },
-    { char: '🤎', keywords: 'brown heart', category: 'Symbols' },
-    { char: '💔', keywords: 'broken heart', category: 'Symbols' },
-    { char: '❣️', keywords: 'heart exclamation', category: 'Symbols' },
-    { char: '💕', keywords: 'two hearts', category: 'Symbols' },
-    { char: '💞', keywords: 'revolving hearts', category: 'Symbols' },
-    { char: '💓', keywords: 'beating heart', category: 'Symbols' },
-    { char: '💗', keywords: 'growing heart', category: 'Symbols' },
-    { char: '💖', keywords: 'sparkling heart', category: 'Symbols' },
-    { char: '💘', keywords: 'cupid, love', category: 'Symbols' },
-    { char: '💝', keywords: 'heart with ribbon', category: 'Symbols' },
-    { char: '💟', keywords: 'heart decoration', category: 'Symbols' },
-    { char: '☮️', keywords: 'peace', category: 'Symbols' },
-    { char: '✝️', keywords: 'cross, religion', category: 'Symbols' },
-    { char: '☪️', keywords: 'star and crescent, religion', category: 'Symbols' },
-    { char: '🕉️', keywords: 'om, religion', category: 'Symbols' },
-    { char: '☸️', keywords: 'wheel of dharma, religion', category: 'Symbols' },
-    { char: '✡️', keywords: 'star of david, religion', category: 'Symbols' },
-    { char: '🔯', keywords: 'six pointed star', category: 'Symbols' },
-    { char: '🕎', keywords: 'menorah, religion', category: 'Symbols' },
-    { char: '☯️', keywords: 'yin yang, balance', category: 'Symbols' },
-    { char: '☦️', keywords: 'orthodox cross, religion', category: 'Symbols' },
-    { char: '🛐', keywords: 'place of worship', category: 'Symbols' },
-    { char: '⛎', keywords: 'ophiuchus, zodiac', category: 'Symbols' },
-    { char: '♈', keywords: 'aries, zodiac', category: 'Symbols' },
-    { char: '♉', keywords: 'taurus, zodiac', category: 'Symbols' },
-    { char: '♊', keywords: 'gemini, zodiac', category: 'Symbols' },
-    { char: '♋', keywords: 'cancer, zodiac', category: 'Symbols' },
-    { char: '♌', keywords: 'leo, zodiac', category: 'Symbols' },
-    { char: '♍', keywords: 'virgo, zodiac', category: 'Symbols' },
-    { char: '♎', keywords: 'libra, zodiac', category: 'Symbols' },
-    { char: '♏', keywords: 'scorpio, zodiac', category: 'Symbols' },
-    { char: '♐', keywords: 'sagittarius, zodiac', category: 'Symbols' },
-    { char: '♑', keywords: 'capricorn, zodiac', category: 'Symbols' },
-    { char: '♒', keywords: 'aquarius, zodiac', category: 'Symbols' },
-    { char: '♓', keywords: 'pisces, zodiac', category: 'Symbols' },
-    { char: '🆔', keywords: 'id', category: 'Symbols' },
-    { char: '⚛️', keywords: 'atom, science', category: 'Symbols' },
-    { char: '⚕️', keywords: 'medical', category: 'Symbols' },
-    { char: '⚠️', keywords: 'warning, caution', category: 'Symbols' },
-    { char: '🚸', keywords: 'children crossing, school', category: 'Symbols' },
-    { char: '⛔', keywords: 'no entry', category: 'Symbols' },
-    { char: '🚫', keywords: 'prohibited', category: 'Symbols' },
-    { char: '🆘', keywords: 'sos, help', category: 'Symbols' },
-    { char: '♨️', keywords: 'hot springs', category: 'Symbols' },
-    { char: '🛑', keywords: 'stop', category: 'Symbols' },
-    { char: '❌', keywords: 'cross, mark', category: 'Symbols' },
-    { char: '✅', keywords: 'check, mark', category: 'Symbols' },
-    { char: '❓', keywords: 'question, mark', category: 'Symbols' },
-    { char: '❗', keywords: 'exclamation, mark', category: 'Symbols' },
-    { char: '🚩', keywords: 'triangular flag', category: 'Symbols' },
-    { char: '🎌', keywords: 'crossed flags', category: 'Symbols' },
-    { char: '🏴', keywords: 'black flag', category: 'Symbols' },
-    { char: '🏳️', keywords: 'white flag', category: 'Symbols' },
-    { char: '🏳️‍🌈', keywords: 'pride, rainbow flag', category: 'Symbols' },
-    { char: '🏳️‍⚧️', keywords: 'transgender flag', category: 'Symbols' },
-    { char: '😀', keywords: 'happy, smile, face', category: 'Faces' },
-    { char: '😂', keywords: 'laugh, lol, face', category: 'Faces' },
-    { char: '😊', keywords: 'smile, happy, face', category: 'Faces' },
-    { char: '😍', keywords: 'love, heart, face', category: 'Faces' },
-    { char: '🥰', keywords: 'love, hearts, face', category: 'Faces' },
-    { char: '😎', keywords: 'cool, glasses, face', category: 'Faces' },
-    { char: '🤔', keywords: 'think, face', category: 'Faces' },
-    { char: '😴', keywords: 'sleep, tired, face', category: 'Faces' },
-    { char: '🤩', keywords: 'star, eyes, face', category: 'Faces' },
-    { char: '🥺', keywords: 'please, face', category: 'Faces' },
-    { char: '😇', keywords: 'angel, face', category: 'Faces' },
-    { char: '🤯', keywords: 'mind blown, wow, face', category: 'Faces' },
-    { char: '🤫', keywords: 'quiet, shh, face', category: 'Faces' },
-    { char: '🫠', keywords: 'melt, face', category: 'Faces' },
-    { char: '👍', keywords: 'good, like, yes', category: 'Faces' },
-    { char: '🙌', keywords: 'celebrate, hands', category: 'Faces' },
-    { char: '👏', keywords: 'clap, hands', category: 'Faces' },
-    { char: '🙏', keywords: 'please, thanks, pray', category: 'Faces' },
-    { char: '💪', keywords: 'strong, fitness, gym', category: 'Faces' },
-    { char: '🤳', keywords: 'selfie, phone', category: 'Faces' },
-    { char: '🫢', keywords: 'face with open eyes and hand over mouth', category: 'Faces' },
-    { char: '🫣', keywords: 'face with peeking eye', category: 'Faces' },
-    { char: '🫡', keywords: 'saluting face', category: 'Faces' },
-    { char: '🫥', keywords: 'dotted line face', category: 'Faces' },
-    { char: '🫤', keywords: 'face with diagonal mouth', category: 'Faces' },
-    { char: '🥹', keywords: 'face holding back tears', category: 'Faces' },
-    { char: '🤡', keywords: 'clown face', category: 'Faces' },
-    { char: '👻', keywords: 'ghost', category: 'Faces' },
-    { char: '👽', keywords: 'alien', category: 'Faces' },
-    { char: '👾', keywords: 'alien monster, game', category: 'Faces' },
-    { char: '🤖', keywords: 'robot', category: 'Faces' },
-    { char: '🎃', keywords: 'jack-o-lantern, halloween', category: 'Faces' },
-    { char: '😺', keywords: 'grinning cat', category: 'Faces' },
-    { char: '😸', keywords: 'grinning cat with smiling eyes', category: 'Faces' },
-    { char: '😹', keywords: 'cat with tears of joy', category: 'Faces' },
-    { char: '😻', keywords: 'smiling cat with heart-eyes', category: 'Faces' },
-    { char: '😼', keywords: 'cat with wry smile', category: 'Faces' },
-    { char: '😽', keywords: 'kissing cat', category: 'Faces' },
-    { char: '🙀', keywords: 'weary cat', category: 'Faces' },
-    { char: '😿', keywords: 'crying cat', category: 'Faces' },
-    { char: '😾', keywords: 'pouting cat', category: 'Faces' }
+    { char: '🐲', keywords: 'dragon face', category: 'Animals' }
 ];
 
 let currentView = 'timeline'; 
@@ -645,8 +416,13 @@ let selectedCategoryId = 'all';
 let selectedIcon = '🎉';
 let editingEventId = null;
 let contextEventId = null;
+let editingCategoryId = null;
 
 let pickerContext = 'modal'; // 'modal', 'context', or 'category'
+
+// State for modal navigation
+let isReturningToEventModal = false;
+let tempSelectedCategoryId = null;
 
 // Auth Logic
 async function checkUser() {
@@ -718,10 +494,9 @@ logoutBtn.addEventListener('click', async () => {
 
 // Persistence Helper
 function saveData() {
-    if (!supabaseClient) {
-        localStorage.setItem('countdown_events', JSON.stringify(events));
-        localStorage.setItem('countdown_categories', JSON.stringify(categories));
-    }
+    // Always save to local storage as backup, regardless of Supabase status
+    localStorage.setItem('countdown_events', JSON.stringify(events));
+    localStorage.setItem('countdown_categories', JSON.stringify(categories));
 }
 
 function loadFallbackData() {
@@ -900,8 +675,16 @@ if (currentDateEl) {
 
 // Modal Logic
 function openModal(eventData = null) {
+    // Ensure others are hidden
+    manageCategoriesModal.classList.add('hidden');
+    moreInfoModal.classList.add('hidden');
+    quickNotesModal.classList.add('hidden');
+
     editingEventId = eventData ? (eventData.id || eventData.tempId) : null;
     modalOverlay.classList.remove('hidden');
+    
+    // Show this one
+    newEventModal.classList.remove('hidden');
     void newEventModal.offsetWidth;
     newEventModal.classList.remove('scale-95', 'opacity-0');
     
@@ -1144,17 +927,43 @@ closeMoreInfoBtn.addEventListener('click', () => {
 });
 
 // Category Management Logic
-manageCategoriesBtn.addEventListener('click', () => {
-    manageCategoriesModal.classList.remove('hidden');
-    void manageCategoriesModal.offsetWidth;
-    manageCategoriesModal.classList.remove('scale-95', 'opacity-0');
-    renderCategoriesList();
+categoryFilterBar.addEventListener('click', (e) => {
+    if (e.target.closest('#manageCategoriesBtn')) {
+        // Hide others
+        newEventModal.classList.add('hidden');
+        moreInfoModal.classList.add('hidden');
+        quickNotesModal.classList.add('hidden');
+        
+        modalOverlay.classList.remove('hidden');
+        
+        manageCategoriesModal.classList.remove('hidden');
+        void manageCategoriesModal.offsetWidth;
+        manageCategoriesModal.classList.remove('scale-95', 'opacity-0');
+        renderCategoriesList();
+    }
 });
 
 closeManageCategoriesBtn.addEventListener('click', () => {
     manageCategoriesModal.classList.add('scale-95', 'opacity-0');
     setTimeout(() => {
         manageCategoriesModal.classList.add('hidden');
+        
+        if (typeof isReturningToEventModal !== 'undefined' && isReturningToEventModal) {
+            newEventModal.classList.remove('hidden');
+            renderModalCategoryTabs();
+            
+            // Restore selection if possible
+            if (tempSelectedCategoryId) {
+                const tab = modalCategoryTabs.querySelector(`.modal-category-tab[data-category-id="${tempSelectedCategoryId}"]`);
+                if (tab) {
+                    modalCategoryTabs.querySelectorAll('.modal-category-tab').forEach(t => t.classList.remove('bg-blue-600'));
+                    tab.classList.add('bg-blue-600');
+                }
+            }
+            isReturningToEventModal = false;
+        } else {
+            modalOverlay.classList.add('hidden');
+        }
     }, 200);
 });
 
@@ -1164,16 +973,38 @@ saveNewCategoryBtn.addEventListener('click', async () => {
     
     if (!name) return;
 
-    const newCat = { name, emoji, color_default: 'bg-blue-500' };
-    
-    if (supabaseClient) {
-        const { data, error } = await supabaseClient.from('categories').insert([newCat]).select();
-        if (!error && data) {
-            categories.push(data[0]);
+    if (editingCategoryId) {
+        const index = categories.findIndex(c => c.id == editingCategoryId);
+        if (index !== -1) {
+            const updatedCat = { ...categories[index], name, emoji };
+            if (supabaseClient) {
+                const { error } = await supabaseClient.from('categories').update({ name, emoji }).eq('id', editingCategoryId);
+                if (!error) {
+                    categories[index] = updatedCat;
+                } else {
+                    alert("Error updating category: " + error.message);
+                    return;
+                }
+            } else {
+                categories[index] = updatedCat;
+            }
         }
+        editingCategoryId = null;
+        saveNewCategoryBtn.innerText = 'Add';
     } else {
-        newCat.id = Date.now();
-        categories.push(newCat);
+        const newCat = { name, emoji, color_default: 'bg-blue-500' };
+        if (supabaseClient) {
+            const { data, error } = await supabaseClient.from('categories').insert([newCat]).select();
+            if (!error && data) {
+                categories.push(data[0]);
+            } else {
+                alert("Error creating category: " + (error?.message || "Unknown error"));
+                return;
+            }
+        } else {
+            newCat.id = Date.now();
+            categories.push(newCat);
+        }
     }
 
     newCategoryNameInput.value = '';
@@ -1190,21 +1021,38 @@ function renderCategoriesList() {
                 <span class="text-xl">${cat.emoji}</span>
                 <span class="font-medium">${cat.name}</span>
             </div>
-            <button onclick="deleteCategory(${cat.id})" class="text-red-500 text-sm font-bold">Delete</button>
+            <div class="flex gap-2">
+                <button onclick="editCategory(${cat.id})" class="text-blue-500 text-sm font-bold">Edit</button>
+                <button onclick="deleteCategory(${cat.id})" class="text-red-500 text-sm font-bold">Delete</button>
+            </div>
         </div>
     `).join('');
 }
+
+window.editCategory = (id) => {
+    const cat = categories.find(c => c.id == id);
+    if (cat) {
+        editingCategoryId = id;
+        newCategoryNameInput.value = cat.name;
+        newCategoryEmojiBtn.innerText = cat.emoji;
+        saveNewCategoryBtn.innerText = 'Update';
+        newCategoryNameInput.focus();
+    }
+};
 
 window.deleteCategory = async (id) => {
     if (!confirm('Delete this category? Events in this category will become uncategorized.')) return;
     
     const index = categories.findIndex(c => c.id == id);
     if (index !== -1) {
-        categories.splice(index, 1);
         if (supabaseClient) {
-            await supabaseClient.from('categories').delete().eq('id', id);
+            const { error } = await supabaseClient.from('categories').delete().eq('id', id);
+            if (error) {
+                alert("Error deleting category: " + error.message);
+                return;
+            }
         }
-        
+        categories.splice(index, 1);
         events.forEach(e => {
             if (e.category_id == id) e.category_id = null;
         });
@@ -1261,13 +1109,6 @@ function renderCategoryFilterBar() {
             renderEvents(events);
         });
     });
-
-    document.getElementById('manageCategoriesBtn').addEventListener('click', () => {
-        manageCategoriesModal.classList.remove('hidden');
-        void manageCategoriesModal.offsetWidth;
-        manageCategoriesModal.classList.remove('scale-95', 'opacity-0');
-        renderCategoriesList();
-    });
 }
 
 function renderModalCategoryTabs() {
@@ -1282,6 +1123,13 @@ function renderModalCategoryTabs() {
             None
         </button>
     `;
+    
+    // Add Manage Button
+    html += `
+        <button id="modalManageCategoriesBtn" class="py-1.5 px-3 rounded-lg text-sm font-semibold whitespace-nowrap bg-gray-700 text-white ml-2">
+            ⚙️
+        </button>
+    `;
 
     modalCategoryTabs.innerHTML = html;
 
@@ -1291,6 +1139,26 @@ function renderModalCategoryTabs() {
             tab.classList.add('bg-blue-600');
         });
     });
+    
+    // Add listener for the new button
+    const manageBtn = document.getElementById('modalManageCategoriesBtn');
+    if (manageBtn) {
+        manageBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            // Save current selection
+            const activeTab = modalCategoryTabs.querySelector('.modal-category-tab.bg-blue-600');
+            tempSelectedCategoryId = activeTab ? activeTab.dataset.categoryId : null;
+            isReturningToEventModal = true;
+            
+            // Switch modals
+            newEventModal.classList.add('hidden');
+            manageCategoriesModal.classList.remove('hidden');
+            void manageCategoriesModal.offsetWidth;
+            manageCategoriesModal.classList.remove('scale-95', 'opacity-0');
+            renderCategoriesList();
+        });
+    }
 }
 
 // Save Logic
@@ -1336,6 +1204,7 @@ saveEventBtn.addEventListener('click', async () => {
             if (!error && data) {
                 events.push(data[0]);
             } else {
+                console.error("Supabase insert failed:", error);
                 events.push(newEvent);
             }
         } else {
