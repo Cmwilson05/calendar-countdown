@@ -59,8 +59,7 @@ const categoriesListEl = document.getElementById('categoriesList');
 export function renderEvents() {
     let filtered = [...state.events];
 
-    if (state.selectedCategoryId === 'upcoming') filtered = filtered.filter(e => calculateDays(getEffectiveDate(e)) >= 0);
-    else if (state.selectedCategoryId === 'starred') filtered = filtered.filter(e => e.starred);
+    if (state.selectedCategoryId === 'starred') filtered = filtered.filter(e => e.starred);
     else if (state.selectedCategoryId !== 'all') filtered = filtered.filter(e => e.category_id == state.selectedCategoryId);
 
     if (state.searchQuery) {
@@ -247,7 +246,7 @@ function renderTimelineItem(event) {
 }
 
 export function renderCategoryFilterBar() {
-    const smart = [{id:'upcoming', name:'Upcoming', emoji:'📅'}, {id:'starred', name:'Starred', emoji:'⭐'}, {id:'all', name:'All', emoji:'🌐'}];
+    const smart = [{id:'starred', name:'Starred', emoji:'⭐'}, {id:'all', name:'All', emoji:'🌐'}];
     let html = smart.map(f => `<button class="filter-tab px-4 py-2.5 rounded-full text-sm font-semibold min-h-[44px] ${state.selectedCategoryId === f.id ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}" data-category-id="${f.id}">${f.emoji} ${f.name}</button>`).join('');
     html += state.categories.map(cat => `<button class="filter-tab px-4 py-2.5 rounded-full text-sm font-semibold min-h-[44px] ${state.selectedCategoryId == cat.id ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}" data-category-id="${cat.id}">${cat.emoji} ${cat.name}</button>`).join('');
     html += `<button id="manageCategoriesBtn" class="px-4 py-2.5 rounded-full text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 whitespace-nowrap min-h-[44px]">+ Edit</button>`;
