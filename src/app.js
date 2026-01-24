@@ -1,6 +1,5 @@
 console.log("🚀 app.js loaded");
 import { supabaseClient, state, saveData, loadFallbackData, initSupabase } from './storage.js';
-import { getEffectiveDate, calculateDays } from './utils.js';
 import { checkUser, setupAuthListener, signIn, signOut } from './auth.js';
 import { renderEvents, renderCategoryFilterBar, renderModalCategoryTabs, renderCategoriesList } from './render.js';
 import { COMMON_EMOJIS } from './emojis.js';
@@ -31,6 +30,10 @@ const eventStarredInput = document.getElementById('eventStarred');
 const eventUrlInput = document.getElementById('eventUrl');
 const eventMultiDayInput = document.getElementById('eventMultiDay');
 const eventRepeatInput = document.getElementById('eventRepeat');
+const unitYearInput = document.getElementById('unitYear');
+const unitMonthInput = document.getElementById('unitMonth');
+const unitWeekInput = document.getElementById('unitWeek');
+const unitDayInput = document.getElementById('unitDay');
 const modalCategoryTabs = document.getElementById('modalCategoryTabs');
 const emojiPicker = document.getElementById('emojiPicker');
 const selectedIconDisplay = document.getElementById('selectedIconDisplay');
@@ -62,6 +65,8 @@ const closeViewOptionsBtn = document.getElementById('closeViewOptions');
 const toggleNotesCheckbox = document.getElementById('toggleNotes');
 const toggleDaysCheckbox = document.getElementById('toggleDays');
 const toggleIconsCheckbox = document.getElementById('toggleIcons');
+const toggleIntervalsCheckbox = document.getElementById('toggleIntervals');
+const toggleScreenshotCheckbox = document.getElementById('toggleScreenshot');
 const toggleGroupingCheckbox = document.getElementById('toggleGrouping');
 const themeToggleBtn = document.getElementById('themeToggle');
 const themeIcon = document.getElementById('themeIcon');
@@ -78,7 +83,7 @@ async function init() {
 
     if (currentDateEl) {
         const now = new Date();
-        currentDateEl.innerText = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase();
+        currentDateEl.innerText = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     }
 
     updateViewToggleUI();
@@ -117,9 +122,28 @@ async function init() {
     
     loader.classList.add('hidden');
     categoryFilterBar.classList.remove('hidden');
-    
+
+    // Initialize view option checkboxes from saved state
     if (toggleGroupingCheckbox) toggleGroupingCheckbox.checked = state.groupByCategory;
-    
+    if (toggleNotesCheckbox) toggleNotesCheckbox.checked = state.showNotes;
+    if (toggleDaysCheckbox) toggleDaysCheckbox.checked = state.showDays;
+    if (toggleIconsCheckbox) toggleIconsCheckbox.checked = state.showIcons;
+    if (toggleIntervalsCheckbox) toggleIntervalsCheckbox.checked = state.showIntervals;
+
+    // Initialize sort option from saved state
+    document.querySelectorAll('.sort-option').forEach(btn => {
+        const check = btn.querySelector('.check');
+        if (btn.dataset.sort === state.sortOption) {
+            btn.classList.add('bg-blue-600', 'text-white');
+            btn.classList.remove('hover:bg-black/5', 'dark:hover:bg-white/10', 'text-gray-600', 'dark:text-gray-300');
+            if (check) check.classList.remove('hidden');
+        } else {
+            btn.classList.remove('bg-blue-600', 'text-white');
+            btn.classList.add('hover:bg-black/5', 'dark:hover:bg-white/10', 'text-gray-600', 'dark:text-gray-300');
+            if (check) check.classList.add('hidden');
+        }
+    });
+
     renderCategoryFilterBar();
     renderEvents();
 }
@@ -177,10 +201,18 @@ saveEventBtn.addEventListener('click', async () => {
         userId = session?.user?.id;
     }
 
+    const displayUnits = {
+        year: unitYearInput?.checked || false,
+        month: unitMonthInput?.checked || false,
+        week: unitWeekInput?.checked || false,
+        day: unitDayInput?.checked ?? true
+    };
+    console.log('Saving display_units:', displayUnits);
+
     const eventData = {
-        title, 
-        date, 
-        icon: state.selectedIcon, 
+        title,
+        date,
+        icon: state.selectedIcon,
         category_id: categoryId,
         notes: eventNotesInput.value.trim(),
         tags: eventTagsInput?.value || '',
@@ -188,7 +220,8 @@ saveEventBtn.addEventListener('click', async () => {
         url: eventUrlInput?.value || '',
         multi_day: eventMultiDayInput?.checked || false,
         repeat: eventRepeatInput?.value || 'never',
-        user_id: userId 
+        display_units: displayUnits,
+        user_id: userId
     };
 
     const tempId = 'temp_' + Math.random().toString(36).substr(2, 9);
@@ -208,11 +241,11 @@ saveEventBtn.addEventListener('click', async () => {
         const query = state.editingEventId && !String(state.editingEventId).startsWith('temp_')
             ? supabaseClient.from('countdown_events').update(eventData).eq('id', state.editingEventId).select()
             : supabaseClient.from('countdown_events').insert([eventData]).select();
-        
+
         const { data, error } = await query;
         if (error) {
             console.error("Supabase Save Error:", error);
-            init(); 
+            init();
         } else if (data && data.length > 0) {
             const idx = state.events.findIndex(e => e.tempId === tempId || e.id === state.editingEventId);
             if (idx !== -1) state.events[idx] = data[0];
@@ -226,6 +259,30 @@ function updateViewToggleUI() {
         gridView.classList.remove('hidden'); timelineView.classList.add('hidden'); viewIcon.innerText = '⊞';
     } else {
         gridView.classList.add('hidden'); timelineView.classList.remove('hidden'); viewIcon.innerText = '⋮☰';
+    }
+}
+
+function applyScreenshotMode() {
+    const bottomNav = document.querySelector('.fixed.bottom-10');
+    const headerControls = document.getElementById('headerControls');
+    const appContent = document.getElementById('appContent');
+
+    if (state.screenshotMode) {
+        // Hide UI elements
+        if (bottomNav) bottomNav.classList.add('hidden');
+        if (headerControls) headerControls.classList.add('hidden');
+        if (categoryFilterBar) categoryFilterBar.classList.add('hidden');
+        // Compact the content
+        if (appContent) appContent.classList.add('screenshot-mode');
+        document.body.classList.add('screenshot-mode');
+    } else {
+        // Show UI elements
+        if (bottomNav) bottomNav.classList.remove('hidden');
+        if (headerControls) headerControls.classList.remove('hidden');
+        if (categoryFilterBar) categoryFilterBar.classList.remove('hidden');
+        // Remove compact mode
+        if (appContent) appContent.classList.remove('screenshot-mode');
+        document.body.classList.remove('screenshot-mode');
     }
 }
 
@@ -251,6 +308,12 @@ function openModal(data = null) {
         eventUrlInput.value = data.url || '';
         eventMultiDayInput.checked = data.multi_day || false;
         eventRepeatInput.value = data.repeat || 'never';
+        // Load display units (default to day only if not set)
+        const units = data.display_units || { year: false, month: false, week: false, day: true };
+        if (unitYearInput) unitYearInput.checked = units.year;
+        if (unitMonthInput) unitMonthInput.checked = units.month;
+        if (unitWeekInput) unitWeekInput.checked = units.week;
+        if (unitDayInput) unitDayInput.checked = units.day;
         state.selectedIcon = data.icon || '🎉';
         currentEmojiDisplay.innerText = state.selectedIcon;
         const tab = modalCategoryTabs.querySelector(`[data-category-id="${data.category_id || 'none'}"]`);
@@ -264,6 +327,11 @@ function openModal(data = null) {
         eventUrlInput.value = '';
         eventMultiDayInput.checked = false;
         eventRepeatInput.value = 'never';
+        // Reset display units to default (day only)
+        if (unitYearInput) unitYearInput.checked = false;
+        if (unitMonthInput) unitMonthInput.checked = false;
+        if (unitWeekInput) unitWeekInput.checked = false;
+        if (unitDayInput) unitDayInput.checked = true;
         state.selectedIcon = '🎉';
         currentEmojiDisplay.innerText = '🎉';
         const tab = modalCategoryTabs.querySelector('[data-category-id="none"]');
@@ -422,8 +490,31 @@ function openContextMenu(x, y, eventId) {
     const event = state.events.find(e => (e.id || e.tempId) == eventId);
     if (!event) return;
     starLabel.innerText = event.starred ? 'Unstar' : 'Star';
-    contextMenu.style.left = `${Math.min(x, window.innerWidth - 240)}px`;
-    contextMenu.style.top = `${Math.min(y, window.innerHeight - 400)}px`;
+
+    // Get menu dimensions
+    const menuWidth = 224; // w-56 = 14rem = 224px
+    const menuHeight = 380; // approximate height with touch-friendly buttons
+    const padding = 16; // safe padding from edges
+
+    // On small screens, center the menu horizontally
+    const isMobile = window.innerWidth < 480;
+    let posX, posY;
+
+    if (isMobile) {
+        posX = Math.max(padding, (window.innerWidth - menuWidth) / 2);
+    } else {
+        posX = Math.min(Math.max(padding, x), window.innerWidth - menuWidth - padding);
+    }
+
+    // Position vertically - prefer below click, but flip if needed
+    if (y + menuHeight + padding > window.innerHeight) {
+        posY = Math.max(padding, y - menuHeight);
+    } else {
+        posY = Math.max(padding, y);
+    }
+
+    contextMenu.style.left = `${posX}px`;
+    contextMenu.style.top = `${posY}px`;
     contextMenu.classList.remove('hidden');
     void contextMenu.offsetWidth;
     contextMenu.classList.remove('opacity-0');
@@ -566,24 +657,41 @@ function initEmojiPicker() {
 }
 
 function positionEmojiPicker(x, y) {
-    emojiPicker.style.left = `${Math.max(10, Math.min(x, window.innerWidth - 270))}px`;
-    emojiPicker.style.top = `${Math.max(10, Math.min(y, window.innerHeight - 250))}px`;
+    const pickerWidth = 288; // w-72 = 18rem = 288px
+    const pickerHeight = 280; // approximate height
+    const padding = 16;
+    const isMobile = window.innerWidth < 480;
+
+    let posX, posY;
+
+    if (isMobile) {
+        // Center horizontally on mobile
+        posX = Math.max(padding, (window.innerWidth - pickerWidth) / 2);
+        // Position in upper portion of screen for thumb accessibility
+        posY = Math.max(padding, Math.min(y, window.innerHeight - pickerHeight - padding));
+    } else {
+        posX = Math.max(padding, Math.min(x, window.innerWidth - pickerWidth - padding));
+        posY = Math.max(padding, Math.min(y, window.innerHeight - pickerHeight - padding));
+    }
+
+    emojiPicker.style.left = `${posX}px`;
+    emojiPicker.style.top = `${posY}px`;
 }
 
 function renderEmojis(arr) {
     const isSearch = emojiSearch.value.length > 0;
     if (isSearch) {
-        emojiList.className = "grid grid-cols-6 gap-1 p-2 max-h-48 overflow-y-auto custom-scrollbar";
-        emojiList.innerHTML = arr.map(em => `<button class="emoji-item w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-xl" data-emoji="${em.char}">${em.char}</button>`).join('');
+        emojiList.className = "grid grid-cols-5 gap-1 p-2 max-h-56 overflow-y-auto custom-scrollbar";
+        emojiList.innerHTML = arr.map(em => `<button class="emoji-item w-11 h-11 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 text-2xl transition-colors" data-emoji="${em.char}">${em.char}</button>`).join('');
     } else {
         const groups = {};
         arr.forEach(em => { if (!groups[em.category]) groups[em.category] = []; groups[em.category].push(em); });
-        emojiList.className = "flex flex-col p-2 max-h-48 overflow-y-auto custom-scrollbar";
+        emojiList.className = "flex flex-col p-2 max-h-56 overflow-y-auto custom-scrollbar";
         emojiList.innerHTML = Object.entries(groups).map(([cat, ems]) => `
             <div class="mb-3">
                 <h3 class="text-[10px] uppercase text-gray-400 font-bold mb-1.5 px-1">${cat}</h3>
-                <div class="grid grid-cols-6 gap-1">
-                    ${ems.map(em => `<button class="emoji-item w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-xl" data-emoji="${em.char}">${em.char}</button>`).join('')}
+                <div class="grid grid-cols-5 gap-1">
+                    ${ems.map(em => `<button class="emoji-item w-11 h-11 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 text-2xl transition-colors" data-emoji="${em.char}">${em.char}</button>`).join('')}
                 </div>
             </div>
         `).join('');
@@ -621,16 +729,50 @@ document.querySelectorAll('.sort-option').forEach(btn => {
         document.querySelectorAll('.sort-option .check').forEach(c => c.classList.add('hidden'));
         btn.querySelector('.check').classList.remove('hidden');
         renderEvents();
+        saveData();
     };
 });
-toggleNotesCheckbox.onchange = (e) => { state.showNotes = e.target.checked; renderEvents(); };
-toggleDaysCheckbox.onchange = (e) => { state.showDays = e.target.checked; renderEvents(); };
-toggleIconsCheckbox.onchange = (e) => { state.showIcons = e.target.checked; renderEvents(); };
-toggleGroupingCheckbox.onchange = async (e) => { 
-    state.groupByCategory = e.target.checked; 
-    await saveData();
-    renderEvents(); 
+toggleNotesCheckbox.onchange = (e) => { state.showNotes = e.target.checked; renderEvents(); saveData(); };
+toggleDaysCheckbox.onchange = (e) => { state.showDays = e.target.checked; renderEvents(); saveData(); };
+toggleIconsCheckbox.onchange = (e) => { state.showIcons = e.target.checked; renderEvents(); saveData(); };
+toggleIntervalsCheckbox.onchange = (e) => { state.showIntervals = e.target.checked; renderEvents(); saveData(); };
+toggleScreenshotCheckbox.onchange = (e) => {
+    state.screenshotMode = e.target.checked;
+    updateScreenshotToggleUI();
+    applyScreenshotMode();
+    renderEvents();
+    // Close view options menu after enabling screenshot mode
+    if (state.screenshotMode) {
+        viewOptionsMenu.classList.add('hidden', 'opacity-0');
+    }
 };
+
+// Screenshot toggle button in header
+const screenshotToggleBtn = document.getElementById('screenshotToggleBtn');
+const screenshotIcon = document.getElementById('screenshotIcon');
+
+function updateScreenshotToggleUI() {
+    if (screenshotIcon) {
+        screenshotIcon.innerText = state.screenshotMode ? '📷' : '📷';
+        screenshotIcon.style.opacity = state.screenshotMode ? '1' : '0.5';
+    }
+    if (toggleScreenshotCheckbox) {
+        toggleScreenshotCheckbox.checked = state.screenshotMode;
+    }
+}
+
+if (screenshotToggleBtn) {
+    screenshotToggleBtn.onclick = () => {
+        state.screenshotMode = !state.screenshotMode;
+        updateScreenshotToggleUI();
+        applyScreenshotMode();
+        renderEvents();
+        if (state.screenshotMode) {
+            viewOptionsMenu.classList.add('hidden', 'opacity-0');
+        }
+    };
+}
+toggleGroupingCheckbox.onchange = (e) => { state.groupByCategory = e.target.checked; renderEvents(); saveData(); };
 
 // Theme Logic
 function updateThemeUI(isDark) {
@@ -699,13 +841,24 @@ if (closeMoreInfoBtn) {
     };
 }
 
-// Manage Categories Button Logic
+// Manage Categories Button Logic + Birthday auto-repeat
 if (modalCategoryTabs) {
     modalCategoryTabs.addEventListener('click', (e) => {
         if (e.target.closest('#modalManageCategoriesBtn')) {
             console.log('Manage Categories clicked');
             newEventModal.classList.add('hidden');
             openManageCategories();
+        }
+
+        // Check if a category tab was clicked and if it's a birthday category
+        const tab = e.target.closest('.modal-category-tab');
+        if (tab) {
+            const categoryId = tab.dataset.categoryId;
+            const category = state.categories.find(c => c.id == categoryId);
+            // Auto-set repeat to yearly for birthday categories
+            if (category && category.name.toLowerCase().includes('birthday')) {
+                if (eventRepeatInput) eventRepeatInput.value = 'yearly';
+            }
         }
     });
 } else {

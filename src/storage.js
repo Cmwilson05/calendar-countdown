@@ -15,11 +15,13 @@ export const state = {
     isReturningToEventModal: false,
     tempSelectedCategoryId: null,
     pickerContext: 'modal',
-    sortOption: 'date-asc',
-    showNotes: true,
-    showDays: true,
-    showIcons: true,
-    groupByCategory: localStorage.getItem('groupByCategory') === null ? false : localStorage.getItem('groupByCategory') === 'true',
+    sortOption: localStorage.getItem('sortOption') || 'date-asc',
+    showNotes: localStorage.getItem('showNotes') === null ? true : localStorage.getItem('showNotes') === 'true',
+    showDays: localStorage.getItem('showDays') === null ? true : localStorage.getItem('showDays') === 'true',
+    showIcons: localStorage.getItem('showIcons') === null ? true : localStorage.getItem('showIcons') === 'true',
+    showIntervals: localStorage.getItem('showIntervals') === 'true',
+    groupByCategory: localStorage.getItem('groupByCategory') === 'true',
+    screenshotMode: false,
     searchQuery: '',
     menuTimeout: null,
     isInitialized: false
@@ -59,6 +61,12 @@ export async function saveData() {
         localStorage.setItem('countdown_events', JSON.stringify(state.events));
         localStorage.setItem('countdown_categories', JSON.stringify(state.categories));
     }
+    // Save all view options
+    localStorage.setItem('sortOption', state.sortOption);
+    localStorage.setItem('showNotes', state.showNotes);
+    localStorage.setItem('showDays', state.showDays);
+    localStorage.setItem('showIcons', state.showIcons);
+    localStorage.setItem('showIntervals', state.showIntervals);
     localStorage.setItem('groupByCategory', state.groupByCategory);
 }
 

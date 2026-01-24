@@ -1,6 +1,60 @@
 import { state } from './storage.js';
 import { getEffectiveDate, calculateDays } from './utils.js';
 
+// Format countdown based on event's display_units setting
+function formatCountdown(days, displayUnits) {
+    console.log('formatCountdown received displayUnits:', displayUnits);
+    const units = displayUnits || { year: false, month: false, week: false, day: true };
+    const absDays = Math.abs(days);
+
+    if (days === 0) return { short: 'Today', long: 'Today' };
+
+    // If no units selected, default to days
+    if (!units.year && !units.month && !units.week && !units.day) {
+        units.day = true;
+    }
+
+    const parts = [];
+    let remaining = absDays;
+
+    if (units.year) {
+        const years = Math.floor(remaining / 365);
+        parts.push(`${years}y`);
+        remaining -= years * 365;
+    }
+
+    if (units.month) {
+        const months = Math.floor(remaining / 30);
+        parts.push(`${months}mo`);
+        remaining -= months * 30;
+    }
+
+    if (units.week) {
+        const weeks = Math.floor(remaining / 7);
+        parts.push(`${weeks}w`);
+        remaining -= weeks * 7;
+    }
+
+    if (units.day) {
+        parts.push(`${remaining}d`);
+    }
+
+    // Fallback if somehow no units selected
+    if (parts.length === 0) {
+        parts.push(`${absDays}d`);
+    }
+
+    const shortText = parts.join(' ');
+    const suffix = days > 0 ? '' : ' ago';
+    const prefix = days > 0 ? 'In ' : '';
+
+    return {
+        short: shortText,
+        long: prefix + shortText + suffix,
+        prefix: days > 0 ? 'Until' : 'Since'
+    };
+}
+
 const gridView = document.getElementById('gridView');
 const timelineView = document.getElementById('timelineView');
 const categoryFilterBar = document.getElementById('categoryFilterBar');
@@ -48,7 +102,8 @@ export function renderEvents() {
         const days = calculateDays(effectiveDate);
         const cat = state.categories.find(c => c.id == event.category_id);
         const displayIcon = event.icon || (cat ? cat.emoji : '📅');
-        
+        const countdown = formatCountdown(days, event.display_units);
+
         return `
             <div class="bg-blue-600 text-white p-6 rounded-3xl shadow-lg aspect-square flex flex-col justify-between cursor-pointer active:scale-95 transition-transform relative"
                  onclick="handleEventClick('${event.id || event.tempId}')">
@@ -59,10 +114,10 @@ export function renderEvents() {
                 </div>
                 <div class="flex flex-col gap-1">
                     <div class="flex items-baseline gap-2">
-                        ${state.showDays ? `<div class="text-3xl font-bold">${Math.abs(days)}</div>` : ''}
+                        ${state.showDays ? `<div class="text-3xl font-bold">${countdown.short}</div>` : ''}
                         ${state.showNotes && event.notes ? `<div class="text-xs opacity-70 line-clamp-2 italic">${event.notes}</div>` : ''}
                     </div>
-                    ${state.showDays ? `<div class="text-sm opacity-80 uppercase tracking-wider">${days === 0 ? 'Today' : (days > 0 ? 'Days Until' : 'Days Since')}</div>` : ''}
+                    ${state.showDays ? `<div class="text-sm opacity-80 uppercase tracking-wider">${days === 0 ? 'Today' : countdown.prefix}</div>` : ''}
                 </div>
             </div>
         `;
@@ -93,7 +148,7 @@ export function renderEvents() {
                     <div class="relative px-4">
                         ${state.showIcons ? `<div class="absolute left-[104px] top-0 bottom-0 border-l-2 border-dotted border-gray-200 dark:border-gray-800"></div>` : ''}
                         <div class="flex flex-col gap-10">
-                            ${catEvents.map(event => renderTimelineItem(event)).join('')}
+                            ${renderTimelineWithIntervals(catEvents)}
                         </div>
                     </div>
                 </div>
@@ -104,11 +159,69 @@ export function renderEvents() {
             <div class="relative px-4 pt-4">
                 ${state.showIcons ? `<div class="absolute left-[104px] top-0 bottom-0 border-l-2 border-dotted border-gray-200 dark:border-gray-800"></div>` : ''}
                 <div class="flex flex-col gap-10">
-                    ${filtered.map(event => renderTimelineItem(event)).join('')}
+                    ${renderTimelineWithIntervals(filtered)}
                 </div>
             </div>
         `;
     }
+}
+
+// Format interval - skips zero values for cleaner display
+function formatInterval(days) {
+    const parts = [];
+    let remaining = days;
+
+    const years = Math.floor(remaining / 365);
+    if (years > 0) {
+        parts.push(`${years}y`);
+        remaining -= years * 365;
+    }
+
+    const months = Math.floor(remaining / 30);
+    if (months > 0) {
+        parts.push(`${months}mo`);
+        remaining -= months * 30;
+    }
+
+    const weeks = Math.floor(remaining / 7);
+    if (weeks > 0) {
+        parts.push(`${weeks}w`);
+        remaining -= weeks * 7;
+    }
+
+    if (remaining > 0 || parts.length === 0) {
+        parts.push(`${remaining}d`);
+    }
+
+    return parts.join(' ');
+}
+
+function renderTimelineWithIntervals(events) {
+    if (!events.length) return '';
+
+    const result = [];
+    for (let i = 0; i < events.length; i++) {
+        result.push(renderTimelineItem(events[i]));
+
+        // Add interval between this event and the next
+        if (state.showIntervals && i < events.length - 1) {
+            const currentDate = getEffectiveDate(events[i]);
+            const nextDate = getEffectiveDate(events[i + 1]);
+            const intervalDays = Math.round((nextDate - currentDate) / (1000 * 60 * 60 * 24));
+
+            if (intervalDays > 0) {
+                const intervalText = formatInterval(intervalDays);
+                result.push(`
+                    <div class="flex items-center gap-6 -my-4">
+                        <div class="w-16"></div>
+                        ${state.showIcons ? '<div class="w-12 flex justify-center"></div>' : ''}
+                        <div class="text-gray-400 dark:text-gray-600 text-xs">${intervalText}</div>
+                    </div>
+                `);
+            }
+        }
+    }
+    return result.join('');
 }
 
 function renderTimelineItem(event) {
@@ -116,6 +229,7 @@ function renderTimelineItem(event) {
     const days = calculateDays(effectiveDate);
     const cat = state.categories.find(c => c.id == event.category_id);
     const displayIcon = event.icon || (cat ? cat.emoji : '📅');
+    const countdown = formatCountdown(days, event.display_units);
 
     return `
         <div class="flex items-start gap-6 relative group cursor-pointer" onclick="handleEventClick('${event.id || event.tempId}')">
@@ -133,7 +247,7 @@ function renderTimelineItem(event) {
                     ${event.starred ? `<span class="text-yellow-500 text-lg">⭐</span>` : ''}
                 </div>
                 <div class="flex items-baseline gap-2">
-                    ${state.showDays ? `<div class="text-gray-500 dark:text-gray-400 font-semibold text-xl">${days === 0 ? 'Today' : (days > 0 ? `In ${days} days` : `${Math.abs(days)} days ago`)}</div>` : ''}
+                    ${state.showDays ? `<div class="text-gray-500 dark:text-gray-400 font-semibold text-xl">${countdown.long}</div>` : ''}
                     ${state.showNotes && event.notes ? `<div class="text-sm text-gray-400 italic">${event.notes}</div>` : ''}
                 </div>
             </div>
@@ -143,9 +257,9 @@ function renderTimelineItem(event) {
 
 export function renderCategoryFilterBar() {
     const smart = [{id:'upcoming', name:'Upcoming', emoji:'📅'}, {id:'starred', name:'Starred', emoji:'⭐'}, {id:'all', name:'All', emoji:'🌐'}];
-    let html = smart.map(f => `<button class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold ${state.selectedCategoryId === f.id ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}" data-category-id="${f.id}">${f.emoji} ${f.name}</button>`).join('');
-    html += state.categories.map(cat => `<button class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold ${state.selectedCategoryId == cat.id ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}" data-category-id="${cat.id}">${cat.emoji} ${cat.name}</button>`).join('');
-    html += `<button id="manageCategoriesBtn" class="px-3 py-1.5 rounded-full text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 whitespace-nowrap">+ Edit</button>`;
+    let html = smart.map(f => `<button class="filter-tab px-4 py-2.5 rounded-full text-sm font-semibold min-h-[44px] ${state.selectedCategoryId === f.id ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}" data-category-id="${f.id}">${f.emoji} ${f.name}</button>`).join('');
+    html += state.categories.map(cat => `<button class="filter-tab px-4 py-2.5 rounded-full text-sm font-semibold min-h-[44px] ${state.selectedCategoryId == cat.id ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}" data-category-id="${cat.id}">${cat.emoji} ${cat.name}</button>`).join('');
+    html += `<button id="manageCategoriesBtn" class="px-4 py-2.5 rounded-full text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 whitespace-nowrap min-h-[44px]">+ Edit</button>`;
     categoryFilterBar.innerHTML = html;
 
     categoryFilterBar.querySelectorAll('.filter-tab').forEach(tab => {
