@@ -2,20 +2,16 @@ import { supabaseClient } from './storage.js';
 
 const authScreen = document.getElementById('authScreen');
 const appContent = document.getElementById('appContent');
-const authForm = document.getElementById('authForm');
-const authEmail = document.getElementById('email');
-const authPassword = document.getElementById('password');
-const authError = document.getElementById('authError');
 
 export function showApp(initCallback) {
-    authScreen.classList.add('hidden');
-    appContent.classList.remove('hidden');
+    if (authScreen) authScreen.classList.add('hidden');
+    if (appContent) appContent.classList.remove('hidden');
     if (initCallback) initCallback();
 }
 
 export function showAuth() {
-    authScreen.classList.remove('hidden');
-    appContent.classList.add('hidden');
+    if (authScreen) authScreen.classList.remove('hidden');
+    if (appContent) appContent.classList.add('hidden');
 }
 
 export async function checkUser(initCallback) {
@@ -47,18 +43,16 @@ export function setupAuthListener(initCallback) {
     });
 }
 
-authForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    authError.classList.add('hidden');
-    if (!supabaseClient) return alert("Supabase not initialized.");
-    
-    const email = authEmail.value;
-    const password = authPassword.value;
-
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) {
-        authError.innerText = error.message;
-        authError.classList.remove('hidden');
+export async function signIn(email, password) {
+    if (!supabaseClient) return { error: { message: "Supabase not initialized." } };
+    try {
+        return await supabaseClient.auth.signInWithPassword({ email, password });
+    } catch (err) {
+        return { error: err };
     }
-    // onAuthStateChange will handle the UI transition
-});
+}
+
+export async function signOut() {
+    if (!supabaseClient) return;
+    await supabaseClient.auth.signOut();
+}

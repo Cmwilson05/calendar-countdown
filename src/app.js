@@ -1,6 +1,6 @@
 import { supabaseClient, state, saveData, loadFallbackData } from './storage.js';
 import { getEffectiveDate, calculateDays } from './utils.js';
-import { checkUser, setupAuthListener } from './auth.js';
+import { checkUser, setupAuthListener, signIn, signOut } from './auth.js';
 import { renderEvents, renderCategoryFilterBar, renderModalCategoryTabs, renderCategoriesList } from './render.js';
 import { COMMON_EMOJIS } from './emojis.js';
 
@@ -68,6 +68,7 @@ const searchContainer = document.getElementById('searchContainer');
 const mainSearchInput = document.getElementById('mainSearchInput');
 const closeSearchBtn = document.getElementById('closeSearchBtn');
 const loader = document.getElementById('loader');
+const logoutBtn = document.getElementById('logoutBtn');
 
 // Data Fetching
 async function init() {
@@ -107,6 +108,42 @@ async function init() {
     categoryFilterBar.classList.remove('hidden');
     renderCategoryFilterBar();
     renderEvents();
+}
+
+// Auth Listener
+const authForm = document.getElementById('authForm');
+if (authForm) {
+    authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const authError = document.getElementById('authError');
+        const authSubmit = document.getElementById('authSubmit');
+        
+        authError.classList.add('hidden');
+        authSubmit.disabled = true;
+        authSubmit.innerText = 'Signing In...';
+
+        try {
+            const { data, error } = await signIn(email, password);
+            if (error) {
+                authError.innerText = error.message;
+                authError.classList.remove('hidden');
+            }
+        } catch (err) {
+            authError.innerText = "An unexpected error occurred.";
+            authError.classList.remove('hidden');
+        } finally {
+            authSubmit.disabled = false;
+            authSubmit.innerText = 'Sign In';
+        }
+    });
+}
+
+if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+        await signOut();
+    };
 }
 
 // Event Handlers
