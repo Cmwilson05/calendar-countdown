@@ -3,20 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <title>Calendar Countdown</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                document.documentElement.style.colorScheme = 'dark';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.style.colorScheme = 'light';
+            }
+        })();
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-            background-color: #ffffff;
             transition: background-color 0.3s, color 0.3s;
         }
-        .dark body {
-            background-color: #000000;
-            color: #ffffff;
+
+        html:not(.dark) body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
         }
+
+        html.dark body {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+        }
+
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
         }
@@ -35,7 +62,7 @@
         }
     </style>
 </head>
-<body class="p-4 md:p-8 bg-white dark:bg-black text-black dark:text-white">
+<body class="p-4 md:p-8">
     <!-- Auth Screen -->
     <div id="authScreen" class="fixed inset-0 bg-white dark:bg-black z-[100] flex items-center justify-center p-4">
         <div class="w-full max-w-md space-y-8">
@@ -112,35 +139,35 @@
         </div>
 
         <!-- Context Menu -->
-        <div id="contextMenu" class="fixed hidden z-50 w-56 bg-[#1c1c1e]/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 overflow-hidden text-white transition-opacity duration-200 opacity-0">
+        <div id="contextMenu" class="fixed hidden z-50 w-56 bg-white/90 dark:bg-[#1c1c1e]/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden text-black dark:text-white transition-opacity duration-200 opacity-0">
             <div class="p-1.5 flex flex-col">
-                <button id="menuEdit" class="flex items-center justify-between px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 transition-colors">
+                <button id="menuEdit" class="flex items-center justify-between px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors">
                     <span class="font-medium">Edit</span>
                     <span class="text-lg italic">📝</span>
                 </button>
-                <button id="menuStar" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
-                    <span class="font-medium text-gray-200" id="starLabel">Star</span>
+                <button id="menuStar" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                    <span class="font-medium text-gray-700 dark:text-gray-200" id="starLabel">Star</span>
                     <span>⭐</span>
                 </button>
-                <button id="menuDuplicate" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
-                    <span class="font-medium text-gray-200">Duplicate</span>
+                <button id="menuDuplicate" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                    <span class="font-medium text-gray-700 dark:text-gray-200">Duplicate</span>
                     <span>👯</span>
                 </button>
 
-                <div class="h-px bg-white/10 my-1 mx-2"></div>
+                <div class="h-px bg-gray-200 dark:bg-white/10 my-1 mx-2"></div>
 
-                <button id="menuNotes" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
-                    <span class="font-medium text-gray-200">Notes</span>
+                <button id="menuNotes" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                    <span class="font-medium text-gray-700 dark:text-gray-200">Notes</span>
                     <span>🗒️</span>
                 </button>
-                <button id="menuUpdateIcon" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 transition-colors">
-                    <span class="font-medium text-gray-200">Update Icon</span>
+                <button id="menuUpdateIcon" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                    <span class="font-medium text-gray-700 dark:text-gray-200">Update Icon</span>
                     <span class="text-xs bg-green-500 rounded px-1 flex items-center justify-center">✳️</span>
                 </button>
 
-                <div class="h-px bg-white/10 my-1 mx-2"></div>
+                <div class="h-px bg-gray-200 dark:bg-white/10 my-1 mx-2"></div>
 
-                <button id="menuDelete" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 transition-colors text-red-500">
+                <button id="menuDelete" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-red-500">
                     <span class="font-medium">Delete</span>
                     <span>🗑️</span>
                 </button>
@@ -148,8 +175,8 @@
         </div>
 
         <!-- View Options Menu -->
-        <div id="viewOptionsMenu" class="fixed hidden z-50 w-64 bg-[#1c1c1e]/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 overflow-hidden text-white transition-opacity duration-200 opacity-0 bottom-24 left-1/2 -translate-x-1/2">
-            <button id="closeViewOptions" class="absolute top-2 right-2 text-gray-400 hover:text-white text-xs z-50 cursor-pointer p-2">✕</button>
+        <div id="viewOptionsMenu" class="fixed hidden z-50 w-64 bg-white/90 dark:bg-[#1c1c1e]/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden text-black dark:text-white transition-opacity duration-200 opacity-0 bottom-24 left-1/2 -translate-x-1/2">
+            <button id="closeViewOptions" class="absolute top-2 right-2 text-gray-400 hover:text-black dark:hover:text-white text-xs z-50 cursor-pointer p-2">✕</button>
             <div class="p-4 space-y-4">
                 <div>
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Sort By</h3>
@@ -158,31 +185,35 @@
                             <span>Date (Soonest)</span>
                             <span class="check">✓</span>
                         </button>
-                        <button class="sort-option w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 text-gray-300 transition-colors" data-sort="date-desc">
+                        <button class="sort-option w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 transition-colors" data-sort="date-desc">
                             <span>Date (Latest)</span>
                             <span class="check hidden">✓</span>
                         </button>
-                        <button class="sort-option w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 text-gray-300 transition-colors" data-sort="alpha">
+                        <button class="sort-option w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300 transition-colors" data-sort="alpha">
                             <span>Alphabetical</span>
                             <span class="check hidden">✓</span>
                         </button>
                     </div>
                 </div>
-                <div class="h-px bg-white/10"></div>
+                <div class="h-px bg-gray-200 dark:bg-white/10"></div>
                 <div>
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Display</h3>
                     <div class="space-y-1">
-                        <label class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 cursor-pointer">
+                        <label class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer">
                             <span>Group by Category</span>
                             <input type="checkbox" id="toggleGrouping" checked class="accent-blue-500 w-4 h-4">
                         </label>
-                        <label class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 cursor-pointer">
+                        <label class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer">
                             <span>Show Notes</span>
                             <input type="checkbox" id="toggleNotes" checked class="accent-blue-500 w-4 h-4">
                         </label>
-                        <label class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 cursor-pointer">
+                        <label class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer">
                             <span>Show Days Count</span>
                             <input type="checkbox" id="toggleDays" checked class="accent-blue-500 w-4 h-4">
+                        </label>
+                        <label class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer">
+                            <span>Show Icons</span>
+                            <input type="checkbox" id="toggleIcons" checked class="accent-blue-500 w-4 h-4">
                         </label>
                     </div>
                 </div>
@@ -192,33 +223,33 @@
         <!-- New Event Modal -->
         <div id="modalOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden flex items-center justify-center p-4">
             <!-- Main New Event Form -->
-            <div id="newEventModal" class="bg-[#1c1c1e] text-white w-full max-w-lg rounded-[2rem] overflow-hidden shadow-2xl transition-all scale-95 opacity-0 relative">
-                <button id="closeNewEventModal" class="absolute top-4 right-4 text-gray-400 hover:text-white p-2 z-10">✕</button>
+            <div id="newEventModal" class="bg-white dark:bg-[#1c1c1e] text-black dark:text-white w-full max-w-lg rounded-[2rem] overflow-hidden shadow-2xl transition-all scale-95 opacity-0 relative">
+                <button id="closeNewEventModal" class="absolute top-4 right-4 text-gray-400 hover:text-black dark:hover:text-white p-2 z-10">✕</button>
                 <div class="p-6">
                     <h2 class="text-xl font-bold mb-4">New Event</h2>
                     
                     <!-- Category Tabs (Dynamic) -->
-                    <div id="modalCategoryTabs" class="flex bg-[#2c2c2e] p-1 rounded-xl mb-4 overflow-x-auto no-scrollbar">
+                    <div id="modalCategoryTabs" class="flex bg-gray-100 dark:bg-[#2c2c2e] p-1 rounded-xl mb-4 overflow-x-auto no-scrollbar">
                         <!-- Dynamic tabs will be injected here -->
                     </div>
 
                     <!-- Title & Notes -->
                     <div class="space-y-3 mb-6">
-                        <input type="text" id="eventTitle" placeholder="Title" class="w-full bg-[#2c2c2e] text-white border-2 border-blue-500/50 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-blue-500">
-                        <textarea id="eventNotes" placeholder="Notes" rows="4" class="w-full bg-[#2c2c2e] text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-gray-600 resize-none"></textarea>
+                        <input type="text" id="eventTitle" placeholder="Title" class="w-full bg-gray-100 dark:bg-[#2c2c2e] text-black dark:text-white border-2 border-blue-500/50 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-blue-500">
+                        <textarea id="eventNotes" placeholder="Notes" rows="4" class="w-full bg-gray-100 dark:bg-[#2c2c2e] text-black dark:text-white border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-gray-400 dark:focus:border-gray-600 resize-none"></textarea>
                     </div>
 
                     <!-- Event Details -->
                     <div class="space-y-4 mb-8">
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-400 font-medium">Date:</span>
-                            <input type="date" id="eventDateInput" class="bg-[#2c2c2e] text-white border border-gray-700 rounded-lg px-3 py-1.5 focus:outline-none">
+                            <span class="text-gray-500 dark:text-gray-400 font-medium">Date:</span>
+                            <input type="date" id="eventDateInput" class="bg-gray-100 dark:bg-[#2c2c2e] text-black dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 focus:outline-none">
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-400 font-medium">Icon:</span>
+                            <span class="text-gray-500 dark:text-gray-400 font-medium">Icon:</span>
                             <div class="flex items-center gap-3 relative" id="emojiPickerContainer">
                                 <button id="selectedIconDisplay" class="w-12 h-12 rounded-full border-2 border-blue-500 p-0.5 overflow-hidden">
-                                    <div id="currentEmoji" class="w-full h-full bg-blue-200 rounded-full flex items-center justify-center text-2xl">🎉</div>
+                                    <div id="currentEmoji" class="w-full h-full bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-2xl">🎉</div>
                                 </button>
                             </div>
                         </div>
@@ -226,9 +257,9 @@
 
                     <!-- Footer Buttons -->
                     <div class="flex items-center justify-between mt-4">
-                        <button id="addMoreInfo" class="bg-[#2c2c2e] text-white px-4 py-2 rounded-xl font-medium">Add More Info</button>
+                        <button id="addMoreInfo" class="bg-gray-100 dark:bg-[#2c2c2e] text-black dark:text-white px-4 py-2 rounded-xl font-medium">Add More Info</button>
                         <div class="flex gap-3">
-                            <button id="cancelEvent" class="bg-[#2c2c2e] text-white px-6 py-2 rounded-xl font-medium">Cancel</button>
+                            <button id="cancelEvent" class="bg-gray-100 dark:bg-[#2c2c2e] text-black dark:text-white px-6 py-2 rounded-xl font-medium">Cancel</button>
                             <button id="saveEvent" class="bg-blue-600 text-white px-8 py-2 rounded-xl font-bold">Save</button>
                         </div>
                     </div>
@@ -236,29 +267,23 @@
             </div>
 
             <!-- More Info Modal Content (Initially Hidden) -->
-            <div id="moreInfoModal" class="bg-[#1c1c1e] text-white w-full max-w-lg rounded-[2rem] overflow-hidden shadow-2xl transition-all scale-95 opacity-0 hidden relative">
-                <button id="closeMoreInfoX" class="absolute top-4 right-4 text-gray-400 hover:text-white p-2 z-10">✕</button>
+            <div id="moreInfoModal" class="bg-white dark:bg-[#1c1c1e] text-black dark:text-white w-full max-w-lg rounded-[2rem] overflow-hidden shadow-2xl transition-all scale-95 opacity-0 hidden relative">
+                <button id="closeMoreInfoX" class="absolute top-4 right-4 text-gray-400 hover:text-black dark:hover:text-white p-2 z-10">✕</button>
                 <div class="p-6">
                     <h2 class="text-xl font-bold mb-6">More Info</h2>
                     
                     <div class="space-y-4">
-                        <div class="bg-[#2c2c2e] rounded-2xl divide-y divide-gray-800">
-                            <div class="flex items-center justify-between px-4 py-4">
-                                <span class="font-medium">Tags</span>
-                                <input type="text" id="eventTags" placeholder="Separated by comma" class="bg-transparent text-right text-white focus:outline-none">
-                            </div>
-                            <div class="flex items-center justify-between px-4 py-4">
-                                <span class="font-medium">Starred</span>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="eventStarred" class="sr-only peer">
-                                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                </label>
-                            </div>
+                        <div class="bg-gray-100 dark:bg-[#2c2c2e] rounded-2xl px-4 py-4 flex items-center justify-between">
+                            <span class="font-medium">Starred</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="eventStarred" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
                         </div>
 
-                        <div class="bg-[#2c2c2e] rounded-2xl px-4 py-4 flex items-center justify-between">
+                        <div class="bg-gray-100 dark:bg-[#2c2c2e] rounded-2xl px-4 py-4 flex items-center justify-between">
                             <span class="font-medium">Repeat</span>
-                            <select id="eventRepeat" class="bg-transparent text-gray-400 text-right focus:outline-none appearance-none cursor-pointer">
+                            <select id="eventRepeat" class="bg-transparent text-gray-500 dark:text-gray-400 text-right focus:outline-none appearance-none cursor-pointer">
                                 <option value="never">Never</option>
                                 <option value="daily">Daily</option>
                                 <option value="weekly">Weekly</option>
@@ -267,38 +292,34 @@
                             </select>
                         </div>
 
-                        <div class="bg-[#2c2c2e] rounded-2xl px-4 py-4">
-                            <input type="text" id="eventUrl" placeholder="URL" class="w-full bg-transparent text-white focus:outline-none">
-                        </div>
-
-                        <div class="bg-[#2c2c2e] rounded-2xl px-4 py-4 flex items-center justify-between">
+                        <div class="bg-gray-100 dark:bg-[#2c2c2e] rounded-2xl px-4 py-4 flex items-center justify-between">
                             <span class="font-medium">Multi-day Event</span>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="eventMultiDay" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                <div class="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                             </label>
                         </div>
 
-                        <div class="bg-[#2c2c2e] rounded-2xl px-4 py-4">
+                        <div class="bg-gray-100 dark:bg-[#2c2c2e] rounded-2xl px-4 py-4">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="font-medium">Display Units</span>
                             </div>
                             <div class="flex gap-4">
                                 <label class="flex items-center gap-2">
-                                    <input type="checkbox" class="w-5 h-5 rounded bg-gray-600 border-none checked:bg-blue-600">
-                                    <span class="text-gray-400">Year</span>
+                                    <input type="checkbox" class="w-5 h-5 rounded bg-gray-300 dark:bg-gray-600 border-none checked:bg-blue-600">
+                                    <span class="text-gray-500 dark:text-gray-400">Year</span>
                                 </label>
                                 <label class="flex items-center gap-2">
-                                    <input type="checkbox" class="w-5 h-5 rounded bg-gray-600 border-none checked:bg-blue-600">
-                                    <span class="text-gray-400">Month</span>
+                                    <input type="checkbox" class="w-5 h-5 rounded bg-gray-300 dark:bg-gray-600 border-none checked:bg-blue-600">
+                                    <span class="text-gray-500 dark:text-gray-400">Month</span>
                                 </label>
                                 <label class="flex items-center gap-2">
-                                    <input type="checkbox" class="w-5 h-5 rounded bg-gray-600 border-none checked:bg-blue-600">
-                                    <span class="text-gray-400">Week</span>
+                                    <input type="checkbox" class="w-5 h-5 rounded bg-gray-300 dark:bg-gray-600 border-none checked:bg-blue-600">
+                                    <span class="text-gray-500 dark:text-gray-400">Week</span>
                                 </label>
                                 <label class="flex items-center gap-2">
-                                    <input type="checkbox" checked class="w-5 h-5 rounded bg-gray-600 border-none checked:bg-blue-600">
-                                    <span class="text-gray-400 font-semibold text-white">Day</span>
+                                    <input type="checkbox" checked class="w-5 h-5 rounded bg-gray-300 dark:bg-gray-600 border-none checked:bg-blue-600">
+                                    <span class="text-gray-600 dark:text-white font-semibold">Day</span>
                                 </label>
                             </div>
                         </div>
@@ -311,21 +332,21 @@
             </div>
 
             <!-- Quick Notes Modal -->
-            <div id="quickNotesModal" class="bg-[#1c1c1e] text-white w-full max-w-lg rounded-[2rem] overflow-hidden shadow-2xl transition-all scale-95 opacity-0 hidden relative">
-                <button id="closeQuickNotesX" class="absolute top-4 right-4 text-gray-400 hover:text-white p-2 z-10">✕</button>
+            <div id="quickNotesModal" class="bg-white dark:bg-[#1c1c1e] text-black dark:text-white w-full max-w-lg rounded-[2rem] overflow-hidden shadow-2xl transition-all scale-95 opacity-0 hidden relative">
+                <button id="closeQuickNotesX" class="absolute top-4 right-4 text-gray-400 hover:text-black dark:hover:text-white p-2 z-10">✕</button>
                 <div class="p-6">
                     <h2 class="text-xl font-bold mb-4">Notes</h2>
-                    <textarea id="quickNotesInput" placeholder="Add notes here..." rows="6" class="w-full bg-[#2c2c2e] text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 resize-none mb-6"></textarea>
+                    <textarea id="quickNotesInput" placeholder="Add notes here..." rows="6" class="w-full bg-gray-100 dark:bg-[#2c2c2e] text-black dark:text-white border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 resize-none mb-6"></textarea>
                     <div class="flex justify-end gap-3">
-                        <button id="cancelQuickNotes" class="bg-[#2c2c2e] text-white px-6 py-2 rounded-xl font-medium">Cancel</button>
+                        <button id="cancelQuickNotes" class="bg-gray-100 dark:bg-[#2c2c2e] text-black dark:text-white px-6 py-2 rounded-xl font-medium">Cancel</button>
                         <button id="saveQuickNotes" class="bg-blue-600 text-white px-8 py-2 rounded-xl font-bold">Save</button>
                     </div>
                 </div>
             </div>
 
             <!-- Manage Categories Modal -->
-            <div id="manageCategoriesModal" class="bg-[#1c1c1e] text-white w-full max-w-lg rounded-[2rem] overflow-hidden shadow-2xl transition-all scale-95 opacity-0 hidden relative">
-                <button id="closeManageCategories" class="absolute top-4 right-4 text-gray-400 hover:text-white p-2 z-10">✕</button>
+            <div id="manageCategoriesModal" class="bg-white dark:bg-[#1c1c1e] text-black dark:text-white w-full max-w-lg rounded-[2rem] overflow-hidden shadow-2xl transition-all scale-95 opacity-0 hidden relative">
+                <button id="closeManageCategories" class="absolute top-4 right-4 text-gray-400 hover:text-black dark:hover:text-white p-2 z-10">✕</button>
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-xl font-bold">Categories</h2>
@@ -335,11 +356,11 @@
                         <!-- Categories will be listed here -->
                     </div>
 
-                    <div class="bg-[#2c2c2e] p-4 rounded-2xl">
-                        <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Add New Category</h3>
+                    <div class="bg-gray-100 dark:bg-[#2c2c2e] p-4 rounded-2xl">
+                        <h3 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Add New Category</h3>
                         <div class="flex gap-2">
-                            <button id="newCategoryEmoji" class="w-10 h-10 bg-[#1c1c1e] rounded-lg flex items-center justify-center text-xl">📁</button>
-                            <input type="text" id="newCategoryName" placeholder="Category Name" class="flex-1 bg-[#1c1c1e] text-white rounded-lg px-3 focus:outline-none">
+                            <button id="newCategoryEmoji" class="w-10 h-10 bg-white dark:bg-[#1c1c1e] rounded-lg flex items-center justify-center text-xl border border-gray-200 dark:border-transparent">📁</button>
+                            <input type="text" id="newCategoryName" placeholder="Category Name" class="flex-1 bg-white dark:bg-[#1c1c1e] text-black dark:text-white rounded-lg px-3 focus:outline-none border border-gray-200 dark:border-transparent">
                             <button id="saveNewCategory" class="bg-blue-600 text-white px-4 rounded-lg font-bold">Add</button>
                         </div>
                     </div>
@@ -349,31 +370,31 @@
 
         <!-- Sticky Bottom Navigation -->
         <div class="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white/80 dark:bg-black/80 backdrop-blur-md px-6 py-3 rounded-full shadow-2xl border border-gray-100 dark:border-gray-800">
-            <button id="addEvent" class="flex items-center gap-2 font-bold text-lg">
+            <button id="addEvent" class="flex items-center gap-2 font-bold text-lg text-black dark:text-white">
                 <span class="bg-black dark:bg-white text-white dark:text-black w-6 h-6 rounded-full flex items-center justify-center text-sm">+</span>
                 New Event
             </button>
             <div class="w-px h-6 bg-gray-200 dark:bg-gray-800 mx-2"></div>
-            <button id="searchEvents" class="text-gray-400">
+            <button id="searchEvents" class="text-gray-400 hover:text-black dark:hover:text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewbox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
             </button>
-            <button id="viewOptionsBtn" class="text-gray-400">
+            <button id="viewOptionsBtn" class="text-gray-400 hover:text-black dark:hover:text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                 </svg>
             </button>
-            <button id="viewToggle" class="text-gray-400">
+            <button id="viewToggle" class="text-gray-400 hover:text-black dark:hover:text-white">
                 <span id="viewIcon" class="text-2xl">⋮☰</span>
             </button>
         </div>
     </div>
 
-    <div id="emojiPicker" class="fixed w-64 bg-[#2c2c2e] text-white border border-gray-700 rounded-2xl shadow-2xl hidden flex flex-col z-[60]">
-        <div class="p-2 border-b border-gray-700 relative">
-            <button id="closeEmojiPicker" class="absolute top-2 right-2 text-gray-400 hover:text-white text-xs cursor-pointer p-2">✕</button>
-            <input type="text" id="emojiSearch" placeholder="Search emojis..." class="w-full bg-[#1c1c1e] text-white border border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 pr-6">
+    <div id="emojiPicker" class="fixed w-64 bg-white dark:bg-[#2c2c2e] text-black dark:text-white border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl hidden flex flex-col z-[60]">
+        <div class="p-2 border-b border-gray-200 dark:border-gray-700 relative">
+            <button id="closeEmojiPicker" class="absolute top-2 right-2 text-gray-400 hover:text-black dark:hover:text-white text-xs cursor-pointer p-2">✕</button>
+            <input type="text" id="emojiSearch" placeholder="Search emojis..." class="w-full bg-gray-100 dark:bg-[#1c1c1e] text-black dark:text-white border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 pr-6">
         </div>
         <div id="emojiList" class="grid grid-cols-6 gap-1 p-2 max-h-48 overflow-y-auto custom-scrollbar">
             <!-- Emojis will be injected here -->

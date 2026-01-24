@@ -1,4 +1,5 @@
-import { supabaseClient, state, saveData, loadFallbackData } from './storage.js';
+console.log("🚀 app.js loaded");
+import { supabaseClient, state, saveData, loadFallbackData, initSupabase } from './storage.js';
 import { getEffectiveDate, calculateDays } from './utils.js';
 import { checkUser, setupAuthListener, signIn, signOut } from './auth.js';
 import { renderEvents, renderCategoryFilterBar, renderModalCategoryTabs, renderCategoriesList } from './render.js';
@@ -60,6 +61,7 @@ const viewOptionsMenu = document.getElementById('viewOptionsMenu');
 const closeViewOptionsBtn = document.getElementById('closeViewOptions');
 const toggleNotesCheckbox = document.getElementById('toggleNotes');
 const toggleDaysCheckbox = document.getElementById('toggleDays');
+const toggleIconsCheckbox = document.getElementById('toggleIcons');
 const toggleGroupingCheckbox = document.getElementById('toggleGrouping');
 const themeToggleBtn = document.getElementById('themeToggle');
 const themeIcon = document.getElementById('themeIcon');
@@ -72,6 +74,8 @@ const logoutBtn = document.getElementById('logoutBtn');
 
 // Data Fetching
 async function init() {
+    initSupabase();
+
     if (currentDateEl) {
         const now = new Date();
         currentDateEl.innerText = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase();
@@ -84,28 +88,38 @@ async function init() {
     gridView.innerHTML = '';
     timelineView.innerHTML = '';
 
+    let dataLoaded = false;
+
     if (supabaseClient) {
         try {
-            const [catRes, eventRes] = await Promise.all([
-                supabaseClient.from('categories').select('*'),
-                supabaseClient.from('countdown_events').select('*')
-            ]);
-            
-            if (catRes.error) throw catRes.error;
-            if (eventRes.error) throw eventRes.error;
-
-            state.categories = catRes.data || [];
-            state.events = eventRes.data || [];
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                const [catRes, eventRes] = await Promise.all([
+                    supabaseClient.from('categories').select('*'),
+                    supabaseClient.from('countdown_events').select('*')
+                ]);
+                
+                if (!catRes.error && !eventRes.error) {
+                    state.categories = catRes.data || [];
+                    state.events = eventRes.data || [];
+                    state.isInitialized = true;
+                    dataLoaded = true;
+                }
+            }
         } catch (err) {
-            console.error("Initialization error, using fallback:", err);
-            loadFallbackData();
+            console.error("Supabase fetch error:", err);
         }
-    } else {
+    }
+
+    if (!dataLoaded) {
         loadFallbackData();
     }
     
     loader.classList.add('hidden');
     categoryFilterBar.classList.remove('hidden');
+    
+    if (toggleGroupingCheckbox) toggleGroupingCheckbox.checked = state.groupByCategory;
+    
     renderCategoryFilterBar();
     renderEvents();
 }
@@ -156,9 +170,11 @@ saveEventBtn.addEventListener('click', async () => {
     const categoryId = activeTab ? (activeTab.dataset.categoryId === 'none' ? null : activeTab.dataset.categoryId) : null;
     
     let userId = null;
+    let session = null;
     if (supabaseClient) {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        userId = user?.id;
+        const res = await supabaseClient.auth.getSession();
+        session = res.data.session;
+        userId = session?.user?.id;
     }
 
     const eventData = {
@@ -186,9 +202,9 @@ saveEventBtn.addEventListener('click', async () => {
 
     renderEvents();
     closeModal();
-    saveData();
+    await saveData();
 
-    if (supabaseClient) {
+    if (supabaseClient && session) {
         const query = state.editingEventId && !String(state.editingEventId).startsWith('temp_')
             ? supabaseClient.from('countdown_events').update(eventData).eq('id', state.editingEventId).select()
             : supabaseClient.from('countdown_events').insert([eventData]).select();
@@ -238,7 +254,7 @@ function openModal(data = null) {
         state.selectedIcon = data.icon || '🎉';
         currentEmojiDisplay.innerText = state.selectedIcon;
         const tab = modalCategoryTabs.querySelector(`[data-category-id="${data.category_id || 'none'}"]`);
-        if (tab) tab.classList.add('bg-blue-600');
+        if (tab) tab.classList.add('bg-blue-600', 'text-white');
     } else {
         eventTitleInput.value = '';
         eventDateInput.value = new Date().toISOString().split('T')[0];
@@ -251,20 +267,49 @@ function openModal(data = null) {
         state.selectedIcon = '🎉';
         currentEmojiDisplay.innerText = '🎉';
         const tab = modalCategoryTabs.querySelector('[data-category-id="none"]');
-        if (tab) tab.classList.add('bg-blue-600');
+        if (tab) tab.classList.add('bg-blue-600', 'text-white');
     }
 }
 
 function closeModal() {
-    newEventModal.classList.add('scale-95', 'opacity-0');
+    // Apply exit animations to all modals
+    [newEventModal, quickNotesModal, moreInfoModal, manageCategoriesModal].forEach(modal => {
+        if (modal) modal.classList.add('scale-95', 'opacity-0');
+    });
+    
     setTimeout(() => {
-        modalOverlay.classList.add('hidden');
-        newEventModal.classList.add('hidden');
+        if (modalOverlay) modalOverlay.classList.add('hidden');
+        [newEventModal, quickNotesModal, moreInfoModal, manageCategoriesModal].forEach(modal => {
+            if (modal) modal.classList.add('hidden');
+        });
     }, 200);
 }
 
-addEventBtn.onclick = () => openModal();
-cancelEventBtn.onclick = closeModal;
+// Wire up all "X" and "Cancel" buttons to closeModal
+[
+    cancelEventBtn, closeNewEventModalBtn,
+    closeMoreInfoXBtn,
+    closeQuickNotesXBtn, cancelQuickNotesBtn,
+    closeManageCategoriesBtn
+].forEach(btn => {
+    if (btn) btn.onclick = closeModal;
+});
+
+// Open modal when clicking "+ New Event"
+if (addEventBtn) {
+    addEventBtn.onclick = () => openModal();
+}
+
+// Pop-up specific close buttons
+if (closeEmojiPickerBtn) {
+    closeEmojiPickerBtn.onclick = () => emojiPicker.classList.add('hidden');
+}
+if (closeViewOptionsBtn) {
+    closeViewOptionsBtn.onclick = () => {
+        viewOptionsMenu.classList.add('opacity-0');
+        setTimeout(() => viewOptionsMenu.classList.add('hidden'), 200);
+    };
+}
 
 // Search
 searchEventsBtn.addEventListener('click', () => {
@@ -299,24 +344,6 @@ function openManageCategories() {
     renderCategoriesList();
 }
 
-document.getElementById('closeManageCategories').onclick = () => {
-    manageCategoriesModal.classList.add('scale-95', 'opacity-0');
-    setTimeout(() => {
-        manageCategoriesModal.classList.add('hidden');
-        if (state.isReturningToEventModal) {
-            newEventModal.classList.remove('hidden');
-            renderModalCategoryTabs();
-            if (state.tempSelectedCategoryId) {
-                const tab = modalCategoryTabs.querySelector(`[data-category-id="${state.tempSelectedCategoryId}"]`);
-                if (tab) tab.classList.add('bg-blue-600');
-            }
-            state.isReturningToEventModal = false;
-        } else {
-            modalOverlay.classList.add('hidden');
-        }
-    }, 200);
-};
-
 window.editCategory = (id) => {
     const cat = state.categories.find(c => c.id == id);
     if (cat) {
@@ -330,11 +357,16 @@ window.editCategory = (id) => {
 
 window.deleteCategory = async (id) => {
     if (!confirm('Delete category?')) return;
-    if (supabaseClient) await supabaseClient.from('categories').delete().eq('id', id);
+    let session = null;
+    if (supabaseClient) {
+        const res = await supabaseClient.auth.getSession();
+        session = res.data.session;
+        if (session) await supabaseClient.from('categories').delete().eq('id', id);
+    }
     state.categories = state.categories.filter(c => c.id != id);
     renderCategoriesList();
     renderCategoryFilterBar();
-    saveData();
+    await saveData();
 };
 
 saveNewCategoryBtn.onclick = async () => {
@@ -346,18 +378,23 @@ saveNewCategoryBtn.onclick = async () => {
         const index = state.categories.findIndex(c => c.id == state.editingCategoryId);
         if (index !== -1) {
             state.categories[index] = { ...state.categories[index], name, emoji };
-            if (supabaseClient) await supabaseClient.from('categories').update({ name, emoji }).eq('id', state.editingCategoryId);
+            if (supabaseClient) {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) await supabaseClient.from('categories').update({ name, emoji }).eq('id', state.editingCategoryId);
+            }
         }
         state.editingCategoryId = null;
         saveNewCategoryBtn.innerText = 'Add';
     } else {
         let userId = null;
+        let session = null;
         if (supabaseClient) {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            userId = user?.id;
+            const res = await supabaseClient.auth.getSession();
+            session = res.data.session;
+            userId = session?.user?.id;
         }
         const newCat = { name, emoji, user_id: userId };
-        if (supabaseClient) {
+        if (supabaseClient && session) {
             const { data } = await supabaseClient.from('categories').insert([newCat]).select();
             if (data) state.categories.push(data[0]);
         } else {
@@ -369,7 +406,7 @@ saveNewCategoryBtn.onclick = async () => {
     newCategoryEmojiBtn.innerText = '📁';
     renderCategoriesList();
     renderCategoryFilterBar();
-    saveData();
+    await saveData();
 };
 
 // Context Menu
@@ -406,8 +443,9 @@ window.addEventListener('click', (e) => {
 
 menuEdit.onclick = () => {
     const event = state.events.find(e => (e.id || e.tempId) == state.contextEventId);
+    // Hide context menu immediately (no animation) before opening modal
+    contextMenu.classList.add('hidden', 'opacity-0');
     if (event) openModal(event);
-    closeContextMenu();
 };
 
 menuDelete.onclick = async () => {
@@ -416,9 +454,12 @@ menuDelete.onclick = async () => {
     if (index !== -1) {
         const id = state.events[index].id;
         state.events.splice(index, 1);
-        if (supabaseClient && id) await supabaseClient.from('countdown_events').delete().eq('id', id);
+        if (supabaseClient && id) {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) await supabaseClient.from('countdown_events').delete().eq('id', id);
+        }
         renderEvents();
-        saveData();
+        await saveData();
     }
     closeContextMenu();
 };
@@ -427,9 +468,12 @@ menuStar.onclick = async () => {
     const index = state.events.findIndex(e => (e.id || e.tempId) == state.contextEventId);
     if (index !== -1) {
         state.events[index].starred = !state.events[index].starred;
-        if (supabaseClient && state.events[index].id) await supabaseClient.from('countdown_events').update({ starred: state.events[index].starred }).eq('id', state.events[index].id);
+        if (supabaseClient && state.events[index].id) {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) await supabaseClient.from('countdown_events').update({ starred: state.events[index].starred }).eq('id', state.events[index].id);
+        }
         renderEvents();
-        saveData();
+        await saveData();
     }
     closeContextMenu();
 };
@@ -437,7 +481,11 @@ menuStar.onclick = async () => {
 menuNotes.onclick = () => {
     const event = state.events.find(e => (e.id || e.tempId) == state.contextEventId);
     if (event) {
+        // Ensure other modals are hidden
         newEventModal.classList.add('hidden');
+        manageCategoriesModal.classList.add('hidden');
+        moreInfoModal.classList.add('hidden');
+        
         modalOverlay.classList.remove('hidden');
         quickNotesInput.value = event.notes || '';
         quickNotesModal.classList.remove('hidden');
@@ -453,9 +501,12 @@ saveQuickNotesBtn.onclick = async () => {
     if (index !== -1) {
         const notes = quickNotesInput.value.trim();
         state.events[index].notes = notes;
-        if (supabaseClient && state.events[index].id) await supabaseClient.from('countdown_events').update({ notes }).eq('id', state.events[index].id);
+        if (supabaseClient && state.events[index].id) {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) await supabaseClient.from('countdown_events').update({ notes }).eq('id', state.events[index].id);
+        }
         renderEvents();
-        saveData();
+        await saveData();
     }
     closeModal();
 };
@@ -498,7 +549,7 @@ function renderEmojis(arr) {
     const isSearch = emojiSearch.value.length > 0;
     if (isSearch) {
         emojiList.className = "grid grid-cols-6 gap-1 p-2 max-h-48 overflow-y-auto custom-scrollbar";
-        emojiList.innerHTML = arr.map(em => `<button class="emoji-item w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-xl" data-emoji="${em.char}">${em.char}</button>`).join('');
+        emojiList.innerHTML = arr.map(em => `<button class="emoji-item w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-xl" data-emoji="${em.char}">${em.char}</button>`).join('');
     } else {
         const groups = {};
         arr.forEach(em => { if (!groups[em.category]) groups[em.category] = []; groups[em.category].push(em); });
@@ -507,7 +558,7 @@ function renderEmojis(arr) {
             <div class="mb-3">
                 <h3 class="text-[10px] uppercase text-gray-400 font-bold mb-1.5 px-1">${cat}</h3>
                 <div class="grid grid-cols-6 gap-1">
-                    ${ems.map(em => `<button class="emoji-item w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-xl" data-emoji="${em.char}">${em.char}</button>`).join('')}
+                    ${ems.map(em => `<button class="emoji-item w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 text-xl" data-emoji="${em.char}">${em.char}</button>`).join('')}
                 </div>
             </div>
         `).join('');
@@ -520,7 +571,10 @@ function renderEmojis(arr) {
                 const idx = state.events.findIndex(e => (e.id || e.tempId) == state.contextEventId);
                 if (idx !== -1) {
                     state.events[idx].icon = em;
-                    if (supabaseClient && state.events[idx].id) await supabaseClient.from('countdown_events').update({ icon: em }).eq('id', state.events[idx].id);
+                    if (supabaseClient && state.events[idx].id) {
+                        const { data: { session } } = await supabaseClient.auth.getSession();
+                        if (session) await supabaseClient.from('countdown_events').update({ icon: em }).eq('id', state.events[idx].id);
+                    }
                     renderEvents();
                 }
             } else if (state.pickerContext === 'category') newCategoryEmojiBtn.innerText = em;
@@ -546,28 +600,44 @@ document.querySelectorAll('.sort-option').forEach(btn => {
 });
 toggleNotesCheckbox.onchange = (e) => { state.showNotes = e.target.checked; renderEvents(); };
 toggleDaysCheckbox.onchange = (e) => { state.showDays = e.target.checked; renderEvents(); };
-toggleGroupingCheckbox.onchange = (e) => { state.groupByCategory = e.target.checked; renderEvents(); };
+toggleIconsCheckbox.onchange = (e) => { state.showIcons = e.target.checked; renderEvents(); };
+toggleGroupingCheckbox.onchange = async (e) => { 
+    state.groupByCategory = e.target.checked; 
+    await saveData();
+    renderEvents(); 
+};
 
 // Theme Logic
 function updateThemeUI(isDark) {
+    const root = document.documentElement;
+    const themeIcon = document.getElementById('themeIcon');
     if (isDark) {
-        document.documentElement.classList.add('dark');
-        themeIcon.innerText = '☀️';
+        root.classList.add('dark');
+        root.style.colorScheme = 'dark';
+        if (themeIcon) themeIcon.innerText = '☀️';
     } else {
-        document.documentElement.classList.remove('dark');
-        themeIcon.innerText = '🌙';
+        root.classList.remove('dark');
+        root.style.colorScheme = 'light';
+        if (themeIcon) themeIcon.innerText = '🌙';
     }
 }
 
-themeToggleBtn.onclick = () => {
-    const isDark = !document.documentElement.classList.contains('dark');
-    updateThemeUI(isDark);
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-};
+if (themeToggleBtn) {
+    themeToggleBtn.onclick = () => {
+        console.log("--- THEME TOGGLE CLICKED ---");
+        const isDark = !document.documentElement.classList.contains('dark');
+        updateThemeUI(isDark);
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    };
+}
 
 const savedTheme = localStorage.getItem('theme');
-const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-updateThemeUI(savedTheme === 'dark' || (!savedTheme && prefersDark));
+if (savedTheme) {
+    updateThemeUI(savedTheme === 'dark');
+} else {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    updateThemeUI(prefersDark);
+}
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -578,3 +648,41 @@ document.addEventListener('keydown', (e) => {
         searchContainer.classList.add('hidden');
     }
 });
+
+// Add More Info Button Logic
+if (addMoreInfoBtn) {
+    addMoreInfoBtn.onclick = () => {
+        console.log('Add More Info clicked');
+        newEventModal.classList.add('hidden');
+        moreInfoModal.classList.remove('hidden');
+        void moreInfoModal.offsetWidth;
+        moreInfoModal.classList.remove('scale-95', 'opacity-0');
+    };
+} else {
+    console.error('addMoreInfoBtn not found');
+}
+
+if (closeMoreInfoBtn) {
+    closeMoreInfoBtn.onclick = () => {
+        moreInfoModal.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            moreInfoModal.classList.add('hidden');
+            newEventModal.classList.remove('hidden');
+            void newEventModal.offsetWidth;
+            newEventModal.classList.remove('scale-95', 'opacity-0');
+        }, 200);
+    };
+}
+
+// Manage Categories Button Logic
+if (modalCategoryTabs) {
+    modalCategoryTabs.addEventListener('click', (e) => {
+        if (e.target.closest('#modalManageCategoriesBtn')) {
+            console.log('Manage Categories clicked');
+            newEventModal.classList.add('hidden');
+            openManageCategories();
+        }
+    });
+} else {
+    console.error('modalCategoryTabs not found');
+}
