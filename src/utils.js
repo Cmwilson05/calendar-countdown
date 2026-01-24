@@ -28,8 +28,20 @@ export function getEffectiveDate(event) {
 
 export function calculateDays(dateObjOrString) {
     const target = dateObjOrString instanceof Date ? dateObjOrString : new Date(dateObjOrString + 'T00:00:00');
-    const now = new Date(); 
+    const now = new Date();
     now.setHours(0,0,0,0);
     const diff = target - now;
     return Math.ceil(diff / 86400000); // 86400000 = ms in a day
+}
+
+export function toTitleCase(str) {
+    if (!str) return str;
+    const smallWords = ['a', 'an', 'the', 'and', 'but', 'or', 'for', 'nor', 'on', 'at', 'to', 'by', 'of', 'in', 'vs'];
+    return str.toLowerCase().split(' ').map((word, index) => {
+        if (!word) return word;
+        if (index === 0 || !smallWords.includes(word)) {
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        }
+        return word;
+    }).join(' ');
 }

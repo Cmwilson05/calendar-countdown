@@ -2,6 +2,7 @@ import { supabaseClient, state, saveData, loadFallbackData, initSupabase } from 
 import { checkUser, setupAuthListener, signIn, signOut } from './auth.js';
 import { renderEvents, renderCategoryFilterBar, renderModalCategoryTabs, renderCategoriesList } from './render.js';
 import { COMMON_EMOJIS } from './emojis.js';
+import { toTitleCase } from './utils.js';
 
 // Elements
 const gridView = document.getElementById('gridView');
@@ -182,6 +183,12 @@ if (logoutBtn) {
 }
 
 // Event Handlers
+
+// Auto title case for event titles
+eventTitleInput.addEventListener('blur', () => {
+    eventTitleInput.value = toTitleCase(eventTitleInput.value.trim());
+});
+
 saveEventBtn.addEventListener('click', async () => {
     const title = eventTitleInput.value.trim();
     const date = eventDateInput.value;
