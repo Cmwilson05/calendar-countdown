@@ -67,7 +67,7 @@
             <div id="searchContainer" class="hidden absolute left-0 right-0 top-0 bottom-0 bg-white z-20 flex items-center px-4 gap-3">
                 <span class="text-xl">🔍</span>
                 <input type="text" id="mainSearchInput" placeholder="Search events..." class="flex-1 text-xl font-semibold outline-none placeholder-gray-300">
-                <button id="closeSearchBtn" class="bg-gray-100 rounded-full p-2 text-gray-500 font-bold">✕</button>
+                <button id="closeSearchBtn" class="bg-gray-100 rounded-full p-2 text-gray-500 font-bold hover:bg-gray-200 transition-colors">✕</button>
             </div>
 
             <div class="flex items-center gap-4">
@@ -131,7 +131,7 @@
 
         <!-- View Options Menu -->
         <div id="viewOptionsMenu" class="fixed hidden z-50 w-64 bg-[#1c1c1e]/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 overflow-hidden text-white transition-opacity duration-200 opacity-0 bottom-24 left-1/2 -translate-x-1/2">
-            <button id="closeViewOptions" class="absolute top-2 right-2 text-gray-400 hover:text-white text-xs">✕</button>
+            <button id="closeViewOptions" class="absolute top-2 right-2 text-gray-400 hover:text-white text-xs z-50 cursor-pointer p-2">✕</button>
             <div class="p-4 space-y-4">
                 <div>
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Sort By</h3>
@@ -293,7 +293,7 @@
             </div>
 
             <!-- Quick Notes Modal -->
-            <div id="quickNotesModal" class="bg-[#1c1c1e] text-white w-full max-lg rounded-[2rem] overflow-hidden shadow-2xl transition-all scale-95 opacity-0 hidden relative">
+            <div id="quickNotesModal" class="bg-[#1c1c1e] text-white w-full max-w-lg rounded-[2rem] overflow-hidden shadow-2xl transition-all scale-95 opacity-0 hidden relative">
                 <button id="closeQuickNotesX" class="absolute top-4 right-4 text-gray-400 hover:text-white p-2 z-10">✕</button>
                 <div class="p-6">
                     <h2 class="text-xl font-bold mb-4">Notes</h2>
@@ -354,7 +354,7 @@
 
     <div id="emojiPicker" class="fixed w-64 bg-[#2c2c2e] text-white border border-gray-700 rounded-2xl shadow-2xl hidden flex flex-col z-[60]">
         <div class="p-2 border-b border-gray-700 relative">
-            <button id="closeEmojiPicker" class="absolute top-2 right-2 text-gray-400 hover:text-white text-xs">✕</button>
+            <button id="closeEmojiPicker" class="absolute top-2 right-2 text-gray-400 hover:text-white text-xs cursor-pointer p-2">✕</button>
             <input type="text" id="emojiSearch" placeholder="Search emojis..." class="w-full bg-[#1c1c1e] text-white border border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 pr-6">
         </div>
         <div id="emojiList" class="grid grid-cols-6 gap-1 p-2 max-h-48 overflow-y-auto custom-scrollbar">

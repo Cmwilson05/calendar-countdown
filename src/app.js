@@ -27,7 +27,7 @@ let pickerContext = 'modal';
 let sortOption = 'date-asc';
 let showNotes = true;
 let showDays = true;
-let groupByCategory = true; // NEW: Toggle state
+let groupByCategory = true;
 let searchQuery = '';
 
 // Elements
@@ -94,7 +94,7 @@ const viewOptionsMenu = document.getElementById('viewOptionsMenu');
 const closeViewOptionsBtn = document.getElementById('closeViewOptions');
 const toggleNotesCheckbox = document.getElementById('toggleNotes');
 const toggleDaysCheckbox = document.getElementById('toggleDays');
-const toggleGroupingCheckbox = document.getElementById('toggleGrouping'); // NEW
+const toggleGroupingCheckbox = document.getElementById('toggleGrouping');
 const searchEventsBtn = document.getElementById('searchEvents');
 const searchContainer = document.getElementById('searchContainer');
 const mainSearchInput = document.getElementById('mainSearchInput');
@@ -794,7 +794,7 @@ document.querySelectorAll('.sort-option').forEach(btn => {
 });
 toggleNotesCheckbox.onchange = (e) => { showNotes = e.target.checked; renderEvents(events); };
 toggleDaysCheckbox.onchange = (e) => { showDays = e.target.checked; renderEvents(events); };
-toggleGroupingCheckbox.onchange = (e) => { groupByCategory = e.target.checked; renderEvents(events); }; // NEW
+toggleGroupingCheckbox.onchange = (e) => { groupByCategory = e.target.checked; renderEvents(events); };
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         emojiPicker.classList.add('hidden');
