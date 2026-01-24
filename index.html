@@ -155,6 +155,10 @@
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Display</h3>
                     <div class="space-y-1">
                         <label class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 cursor-pointer">
+                            <span>Group by Category</span>
+                            <input type="checkbox" id="toggleGrouping" checked class="accent-blue-500 w-4 h-4">
+                        </label>
+                        <label class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/10 cursor-pointer">
                             <span>Show Notes</span>
                             <input type="checkbox" id="toggleNotes" checked class="accent-blue-500 w-4 h-4">
                         </label>
@@ -289,7 +293,7 @@
             </div>
 
             <!-- Quick Notes Modal -->
-            <div id="quickNotesModal" class="bg-[#1c1c1e] text-white w-full max-w-lg rounded-[2rem] overflow-hidden shadow-2xl transition-all scale-95 opacity-0 hidden relative">
+            <div id="quickNotesModal" class="bg-[#1c1c1e] text-white w-full max-lg rounded-[2rem] overflow-hidden shadow-2xl transition-all scale-95 opacity-0 hidden relative">
                 <button id="closeQuickNotesX" class="absolute top-4 right-4 text-gray-400 hover:text-white p-2 z-10">✕</button>
                 <div class="p-6">
                     <h2 class="text-xl font-bold mb-4">Notes</h2>

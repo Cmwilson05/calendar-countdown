@@ -27,6 +27,7 @@ let pickerContext = 'modal';
 let sortOption = 'date-asc';
 let showNotes = true;
 let showDays = true;
+let groupByCategory = true; // NEW: Toggle state
 let searchQuery = '';
 
 // Elements
@@ -93,6 +94,7 @@ const viewOptionsMenu = document.getElementById('viewOptionsMenu');
 const closeViewOptionsBtn = document.getElementById('closeViewOptions');
 const toggleNotesCheckbox = document.getElementById('toggleNotes');
 const toggleDaysCheckbox = document.getElementById('toggleDays');
+const toggleGroupingCheckbox = document.getElementById('toggleGrouping'); // NEW
 const searchEventsBtn = document.getElementById('searchEvents');
 const searchContainer = document.getElementById('searchContainer');
 const mainSearchInput = document.getElementById('mainSearchInput');
@@ -322,49 +324,68 @@ function renderEvents(eventsToRender) {
         `;
     }).join('');
 
-    const grouped = filtered.reduce((acc, event) => {
-        const catId = event.category_id || 'none';
-        if (!acc[catId]) acc[catId] = [];
-        acc[catId].push(event);
-        return acc;
-    }, {});
+    if (groupByCategory) {
+        const grouped = filtered.reduce((acc, event) => {
+            const catId = event.category_id || 'none';
+            if (!acc[catId]) acc[catId] = [];
+            acc[catId].push(event);
+            return acc;
+        }, {});
 
-    timelineView.innerHTML = Object.entries(grouped).map(([catId, catEvents]) => {
-        const cat = categories.find(c => c.id == catId);
-        return `
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold text-green-400 mb-6 px-4">${cat ? cat.name : 'Uncategorized'}</h2>
-                <div class="relative px-4">
-                    <div class="absolute left-[104px] top-0 bottom-0 border-l-2 border-dotted border-green-300"></div>
-                    <div class="flex flex-col gap-10">
-                        ${catEvents.map(event => {
-                            const effectiveDate = getEffectiveDate(event);
-                            const days = calculateDays(effectiveDate);
-                            const displayIcon = event.icon || (cat ? cat.emoji : '📅');
-                            return `
-                                <div class="flex items-start gap-6 relative group cursor-pointer" onclick="handleEventClick('${event.id || event.tempId}')">
-                                    <div class="w-16 text-right pt-1 flex-shrink-0">
-                                        <div class="text-gray-400 font-bold text-xl leading-none mb-1">${effectiveDate.toLocaleDateString('en-US', {month:'short', day:'numeric'})}</div>
-                                        <div class="text-gray-300 text-sm font-semibold">${effectiveDate.getFullYear()}</div>
-                                    </div>
-                                    <div class="relative z-10 flex items-center justify-center w-12 h-12 bg-white rounded-full border border-gray-100 shadow-sm flex-shrink-0">
-                                        <span class="text-2xl">${displayIcon}</span>
-                                    </div>
-                                    <div class="flex-1 pt-1">
-                                        <div class="font-bold text-2xl text-black leading-tight mb-0.5">${event.title}</div>
-                                        <div class="flex items-baseline gap-2">
-                                            ${showDays ? `<div class="text-gray-400 font-semibold text-xl">${days === 0 ? 'Today' : (days > 0 ? `In ${days} days` : `${Math.abs(days)} days ago`)}</div>` : ''}
-                                            ${showNotes && event.notes ? `<div class="text-sm text-gray-500 italic">${event.notes}</div>` : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
+        timelineView.innerHTML = Object.entries(grouped).map(([catId, catEvents]) => {
+            const cat = categories.find(c => c.id == catId);
+            return `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-green-400 mb-6 px-4">${cat ? cat.name : 'Uncategorized'}</h2>
+                    <div class="relative px-4">
+                        <div class="absolute left-[104px] top-0 bottom-0 border-l-2 border-dotted border-green-300"></div>
+                        <div class="flex flex-col gap-10">
+                            ${catEvents.map(event => renderTimelineItem(event)).join('')}
+                        </div>
                     </div>
                 </div>
+            `;
+        }).join('');
+    } else {
+        if (filtered.length === 0) {
+            timelineView.innerHTML = `<div class="text-center text-gray-400 py-10">No events found.</div>`;
+        } else {
+            timelineView.innerHTML = `
+                <div class="relative px-4 pt-4">
+                    <div class="absolute left-[104px] top-0 bottom-0 border-l-2 border-dotted border-gray-300"></div>
+                    <div class="flex flex-col gap-10">
+                        ${filtered.map(event => renderTimelineItem(event)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    }
+}
+
+function renderTimelineItem(event) {
+    const effectiveDate = getEffectiveDate(event);
+    const days = calculateDays(effectiveDate);
+    const cat = categories.find(c => c.id == event.category_id);
+    const displayIcon = event.icon || (cat ? cat.emoji : '📅');
+
+    return `
+        <div class="flex items-start gap-6 relative group cursor-pointer" onclick="handleEventClick('${event.id || event.tempId}')">
+            <div class="w-16 text-right pt-1 flex-shrink-0">
+                <div class="text-gray-400 font-bold text-xl leading-none mb-1">${effectiveDate.toLocaleDateString('en-US', {month:'short', day:'numeric'})}</div>
+                <div class="text-gray-300 text-sm font-semibold">${effectiveDate.getFullYear()}</div>
             </div>
-        `;
-    }).join('');
+            <div class="relative z-10 flex items-center justify-center w-12 h-12 bg-white rounded-full border border-gray-100 shadow-sm flex-shrink-0">
+                <span class="text-2xl">${displayIcon}</span>
+            </div>
+            <div class="flex-1 pt-1">
+                <div class="font-bold text-2xl text-black leading-tight mb-0.5">${event.title}</div>
+                <div class="flex items-baseline gap-2">
+                    ${showDays ? `<div class="text-gray-400 font-semibold text-xl">${days === 0 ? 'Today' : (days > 0 ? `In ${days} days` : `${Math.abs(days)} days ago`)}</div>` : ''}
+                    ${showNotes && event.notes ? `<div class="text-sm text-gray-500 italic">${event.notes}</div>` : ''}
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function getEffectiveDate(event) {
@@ -472,16 +493,8 @@ mainSearchInput.addEventListener('input', (e) => {
 // Category Management
 function renderCategoryFilterBar() {
     const smart = [{id:'upcoming', name:'Upcoming', emoji:'📅'}, {id:'starred', name:'Starred', emoji:'⭐'}, {id:'all', name:'All', emoji:'🌐'}];
-    let html = smart.map(f => `
-        <button class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold ${selectedCategoryId === f.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}" data-category-id="${f.id}">
-            ${f.emoji} ${f.name}
-        </button>
-    `).join('');
-    html += categories.map(cat => `
-        <button class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold ${selectedCategoryId == cat.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}" data-category-id="${cat.id}">
-            ${cat.emoji} ${cat.name}
-        </button>
-    `).join('');
+    let html = smart.map(f => `<button class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold ${selectedCategoryId === f.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}" data-category-id="${f.id}">${f.emoji} ${f.name}</button>`).join('');
+    html += categories.map(cat => `<button class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold ${selectedCategoryId == cat.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}" data-category-id="${cat.id}">${cat.emoji} ${cat.name}</button>`).join('');
     html += `<button id="manageCategoriesBtn" class="px-3 py-1.5 rounded-full text-sm font-semibold bg-gray-100 text-gray-600 whitespace-nowrap">+ Edit</button>`;
     categoryFilterBar.innerHTML = html;
 
@@ -499,9 +512,7 @@ function renderCategoryFilterBar() {
 }
 
 function renderModalCategoryTabs() {
-    let html = categories.map(cat => `
-        <button class="modal-category-tab flex-1 py-1.5 px-3 rounded-lg text-sm font-semibold" data-category-id="${cat.id}">${cat.name}</button>
-    `).join('');
+    let html = categories.map(cat => `<button class="modal-category-tab flex-1 py-1.5 px-3 rounded-lg text-sm font-semibold" data-category-id="${cat.id}">${cat.name}</button>`).join('');
     html += `<button class="modal-category-tab flex-1 py-1.5 px-3 rounded-lg text-sm font-semibold" data-category-id="none">None</button>`;
     html += `<button id="modalManageCategoriesBtn" class="py-1.5 px-3 rounded-lg text-sm font-semibold bg-gray-700 text-white ml-2">⚙️</button>`;
     modalCategoryTabs.innerHTML = html;
@@ -783,6 +794,7 @@ document.querySelectorAll('.sort-option').forEach(btn => {
 });
 toggleNotesCheckbox.onchange = (e) => { showNotes = e.target.checked; renderEvents(events); };
 toggleDaysCheckbox.onchange = (e) => { showDays = e.target.checked; renderEvents(events); };
+toggleGroupingCheckbox.onchange = (e) => { groupByCategory = e.target.checked; renderEvents(events); }; // NEW
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         emojiPicker.classList.add('hidden');
