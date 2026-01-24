@@ -437,8 +437,33 @@ function closeContextMenu() {
     }, 200);
 }
 
+// Close popups when clicking outside
 window.addEventListener('click', (e) => {
-    if (!contextMenu.contains(e.target) && !emojiPicker.contains(e.target)) closeContextMenu();
+    // Close context menu when clicking outside (but not if clicking emoji picker)
+    if (!contextMenu.contains(e.target) && !emojiPicker.contains(e.target)) {
+        closeContextMenu();
+    }
+
+    // Close emoji picker when clicking outside
+    if (!emojiPicker.contains(e.target) &&
+        !selectedIconDisplay?.contains(e.target) &&
+        !menuUpdateIcon?.contains(e.target) &&
+        !newCategoryEmojiBtn?.contains(e.target)) {
+        emojiPicker.classList.add('hidden');
+    }
+
+    // Close view options menu when clicking outside
+    if (!viewOptionsMenu.contains(e.target) && !viewOptionsBtn.contains(e.target) && !viewOptionsMenu.classList.contains('hidden')) {
+        viewOptionsMenu.classList.add('opacity-0');
+        setTimeout(() => viewOptionsMenu.classList.add('hidden'), 200);
+    }
+});
+
+// Close modal when clicking on overlay (not modal content)
+modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) {
+        closeModal();
+    }
 });
 
 menuEdit.onclick = () => {
