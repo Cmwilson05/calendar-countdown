@@ -29,6 +29,7 @@ let showNotes = true;
 let showDays = true;
 let groupByCategory = true;
 let searchQuery = '';
+let menuTimeout = null; // NEW: Track context menu hide timer
 
 // Elements
 const authScreen = document.getElementById('authScreen');
@@ -635,6 +636,7 @@ window.handleEventClick = function(eventId) {
 };
 
 function openContextMenu(x, y, eventId) {
+    if (menuTimeout) clearTimeout(menuTimeout); // NEW: Cancel hide timer
     contextEventId = eventId;
     const event = events.find(e => (e.id || e.tempId) == eventId);
     if (!event) return;
@@ -647,11 +649,15 @@ function openContextMenu(x, y, eventId) {
 }
 
 function closeContextMenu() {
+    if (menuTimeout) clearTimeout(menuTimeout); // NEW: Clear existing timer
     contextMenu.classList.add('opacity-0');
-    setTimeout(() => contextMenu.classList.add('hidden'), 200);
+    // NEW: Use timer for fade out
+    menuTimeout = setTimeout(() => {
+        contextMenu.classList.add('hidden');
+    }, 200);
 }
 
-window.addEventListener('mousedown', (e) => {
+window.addEventListener('click', (e) => { // CHANGED: mousedown to click
     if (!contextMenu.contains(e.target) && !emojiPicker.contains(e.target)) closeContextMenu();
 });
 
@@ -784,6 +790,7 @@ setupAuthListener();
 
 // View Options
 viewOptionsBtn.onclick = (e) => { e.stopPropagation(); viewOptionsMenu.classList.toggle('hidden'); viewOptionsMenu.classList.toggle('opacity-0'); };
+closeViewOptionsBtn.onclick = () => { viewOptionsMenu.classList.add('opacity-0'); setTimeout(() => viewOptionsMenu.classList.add('hidden'), 200); }; // NEW: Close button logic
 document.querySelectorAll('.sort-option').forEach(btn => {
     btn.onclick = () => {
         sortOption = btn.dataset.sort;
