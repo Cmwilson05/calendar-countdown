@@ -238,12 +238,13 @@ function renderEvents(eventsToRender) {
     gridView.innerHTML = filtered.map(event => {
         const days = calculateDays(event.date);
         const cat = categories.find(c => c.id == event.category_id);
+        const displayIcon = event.icon || (cat ? cat.emoji : '📅');
         return `
             <div class="bg-blue-500 text-white p-6 rounded-3xl shadow-lg aspect-square flex flex-col justify-between cursor-pointer active:scale-95 transition-transform" 
                  onclick="handleEventClick('${event.id || event.tempId}')">
                 <div class="flex justify-between items-start">
                     <div class="text-xl font-bold">${event.title}</div>
-                    <div class="text-xl">${cat ? cat.emoji : ''}</div>
+                    <div class="text-xl">${displayIcon}</div>
                 </div>
                 <div class="flex flex-col gap-1">
                     <div class="flex items-baseline gap-2">
@@ -380,10 +381,12 @@ document.getElementById('closeManageCategories').onclick = () => {
 };
 
 // Helpers
-function calculateDays(date) {
-    const d = new Date(date); d.setHours(0,0,0,0);
-    const now = new Date(); now.setHours(0,0,0,0);
-    return Math.ceil((d - now) / 86400000);
+function calculateDays(dateString) {
+    const target = new Date(dateString + 'T00:00:00'); // Force local time
+    const now = new Date();
+    now.setHours(0,0,0,0); // Normalize 'now' to midnight
+    const diff = target - now;
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
 function updateViewToggleUI() {
