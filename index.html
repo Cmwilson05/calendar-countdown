@@ -61,8 +61,15 @@
 
     <!-- Main App Content (Hidden by default) -->
     <div id="appContent" class="max-w-4xl mx-auto hidden">
-        <header class="flex justify-between items-center mb-4">
+        <header class="relative flex justify-between items-center mb-4">
             <h1 id="viewTitle" class="text-4xl font-bold">All</h1>
+
+            <div id="searchContainer" class="hidden absolute left-0 right-0 top-0 bottom-0 bg-white z-20 flex items-center px-4 gap-3">
+                <span class="text-xl">🔍</span>
+                <input type="text" id="mainSearchInput" placeholder="Search events..." class="flex-1 text-xl font-semibold outline-none placeholder-gray-300">
+                <button id="closeSearchBtn" class="bg-gray-100 rounded-full p-2 text-gray-500 font-bold">✕</button>
+            </div>
+
             <div class="flex items-center gap-4">
                 <span id="currentDate" class="uppercase text-sm font-semibold tracking-wider text-gray-400"></span>
                 <button id="logoutBtn" class="text-sm font-semibold text-gray-400 hover:text-black">Logout</button>
@@ -229,10 +236,13 @@
 
                         <div class="bg-[#2c2c2e] rounded-2xl px-4 py-4 flex items-center justify-between">
                             <span class="font-medium">Repeat</span>
-                            <div class="flex items-center gap-2">
-                                <span class="text-gray-400">Never</span>
-                                <span class="text-xs text-gray-500">↕️</span>
-                            </div>
+                            <select id="eventRepeat" class="bg-transparent text-gray-400 text-right focus:outline-none appearance-none cursor-pointer">
+                                <option value="never">Never</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
                         </div>
 
                         <div class="bg-[#2c2c2e] rounded-2xl px-4 py-4">

@@ -27,6 +27,7 @@ let pickerContext = 'modal';
 let sortOption = 'date-asc';
 let showNotes = true;
 let showDays = true;
+let searchQuery = ''; // NEW: Track search state
 
 // Elements
 const authScreen = document.getElementById('authScreen');
@@ -60,6 +61,7 @@ const eventTagsInput = document.getElementById('eventTags');
 const eventStarredInput = document.getElementById('eventStarred');
 const eventUrlInput = document.getElementById('eventUrl');
 const eventMultiDayInput = document.getElementById('eventMultiDay');
+const eventRepeatInput = document.getElementById('eventRepeat'); // NEW
 const modalCategoryTabs = document.getElementById('modalCategoryTabs');
 const emojiPicker = document.getElementById('emojiPicker');
 const selectedIconDisplay = document.getElementById('selectedIconDisplay');
@@ -91,6 +93,10 @@ const viewOptionsMenu = document.getElementById('viewOptionsMenu');
 const closeViewOptionsBtn = document.getElementById('closeViewOptions');
 const toggleNotesCheckbox = document.getElementById('toggleNotes');
 const toggleDaysCheckbox = document.getElementById('toggleDays');
+const searchEventsBtn = document.getElementById('searchEvents'); // NEW
+const searchContainer = document.getElementById('searchContainer'); // NEW
+const mainSearchInput = document.getElementById('mainSearchInput'); // NEW
+const closeSearchBtn = document.getElementById('closeSearchBtn'); // NEW
 
 // Auth Logic
 async function checkUser() {
@@ -183,6 +189,7 @@ saveEventBtn.addEventListener('click', async () => {
         starred: eventStarredInput?.checked || false,
         url: eventUrlInput?.value || '',
         multi_day: eventMultiDayInput?.checked || false,
+        repeat: eventRepeatInput?.value || 'never', // NEW
         user_id: user?.id 
     };
 
@@ -214,8 +221,6 @@ saveEventBtn.addEventListener('click', async () => {
             const idx = events.findIndex(e => e.tempId === tempId || e.id === editingEventId);
             if (idx !== -1) events[idx] = data[0];
             renderEvents(events);
-        } else {
-            alert("WARNING: Event saved but server returned no data. Check your Supabase RLS 'SELECT' policies.");
         }
     }
 });
@@ -223,27 +228,46 @@ saveEventBtn.addEventListener('click', async () => {
 // UI Rendering
 function renderEvents(eventsToRender) {
     let filtered = eventsToRender;
-    if (selectedCategoryId === 'upcoming') filtered = eventsToRender.filter(e => calculateDays(e.date) >= 0);
-    else if (selectedCategoryId === 'starred') filtered = eventsToRender.filter(e => e.starred);
-    else if (selectedCategoryId !== 'all') filtered = eventsToRender.filter(e => e.category_id == selectedCategoryId);
 
-    // Sorting
+    // Filter by Category
+    if (selectedCategoryId === 'upcoming') filtered = filtered.filter(e => calculateDays(getEffectiveDate(e)) >= 0);
+    else if (selectedCategoryId === 'starred') filtered = filtered.filter(e => e.starred);
+    else if (selectedCategoryId !== 'all') filtered = filtered.filter(e => e.category_id == selectedCategoryId);
+
+    // NEW: Filter by Search Query
+    if (searchQuery) {
+        const lowerQ = searchQuery.toLowerCase();
+        filtered = filtered.filter(e => 
+            e.title.toLowerCase().includes(lowerQ) || 
+            (e.notes && e.notes.toLowerCase().includes(lowerQ))
+        );
+    }
+
+    // Sorting (Using Effective Date for Repeatable Events)
     filtered.sort((a, b) => {
-        if (sortOption === 'date-asc') return new Date(a.date) - new Date(b.date);
-        if (sortOption === 'date-desc') return new Date(b.date) - new Date(a.date);
+        const dateA = getEffectiveDate(a);
+        const dateB = getEffectiveDate(b);
+        
+        if (sortOption === 'date-asc') return dateA - dateB;
+        if (sortOption === 'date-desc') return dateB - dateA;
         if (sortOption === 'alpha') return a.title.localeCompare(b.title);
         return 0;
     });
 
+    // Render Grid
     gridView.innerHTML = filtered.map(event => {
-        const days = calculateDays(event.date);
+        const effectiveDate = getEffectiveDate(event);
+        const days = calculateDays(effectiveDate);
         const cat = categories.find(c => c.id == event.category_id);
+        
+        // FIX: Prioritize Event Icon
         const displayIcon = event.icon || (cat ? cat.emoji : '📅');
+        
         return `
             <div class="bg-blue-500 text-white p-6 rounded-3xl shadow-lg aspect-square flex flex-col justify-between cursor-pointer active:scale-95 transition-transform" 
                  onclick="handleEventClick('${event.id || event.tempId}')">
                 <div class="flex justify-between items-start">
-                    <div class="text-xl font-bold">${event.title}</div>
+                    <div class="text-xl font-bold line-clamp-2">${event.title}</div>
                     <div class="text-xl">${displayIcon}</div>
                 </div>
                 <div class="flex flex-col gap-1">
@@ -257,6 +281,7 @@ function renderEvents(eventsToRender) {
         `;
     }).join('');
 
+    // Render Timeline
     const grouped = filtered.reduce((acc, event) => {
         const catId = event.category_id || 'none';
         if (!acc[catId]) acc[catId] = [];
@@ -273,16 +298,18 @@ function renderEvents(eventsToRender) {
                     <div class="absolute left-[104px] top-0 bottom-0 border-l-2 border-dotted border-green-300"></div>
                     <div class="flex flex-col gap-10">
                         ${catEvents.map(event => {
-                            const days = calculateDays(event.date);
-                            const d = new Date(event.date);
+                            const effectiveDate = getEffectiveDate(event);
+                            const days = calculateDays(effectiveDate);
+                            const displayIcon = event.icon || (cat ? cat.emoji : '📅');
+                            
                             return `
                                 <div class="flex items-start gap-6 relative group cursor-pointer" onclick="handleEventClick('${event.id || event.tempId}')">
                                     <div class="w-16 text-right pt-1 flex-shrink-0">
-                                        <div class="text-gray-400 font-bold text-xl leading-none mb-1">${d.toLocaleDateString('en-US', {month:'short', day:'numeric'})}</div>
-                                        <div class="text-gray-300 text-sm font-semibold">${d.getFullYear()}</div>
+                                        <div class="text-gray-400 font-bold text-xl leading-none mb-1">${effectiveDate.toLocaleDateString('en-US', {month:'short', day:'numeric'})}</div>
+                                        <div class="text-gray-300 text-sm font-semibold">${effectiveDate.getFullYear()}</div>
                                     </div>
                                     <div class="relative z-10 flex items-center justify-center w-12 h-12 bg-white rounded-full border border-gray-100 shadow-sm flex-shrink-0">
-                                        <span class="text-2xl">${event.icon || '📅'}</span>
+                                        <span class="text-2xl">${displayIcon}</span>
                                     </div>
                                     <div class="flex-1 pt-1">
                                         <div class="font-bold text-2xl text-black leading-tight mb-0.5">${event.title}</div>
@@ -301,90 +328,33 @@ function renderEvents(eventsToRender) {
     }).join('');
 }
 
-function renderCategoryFilterBar() {
-    const smart = [{id:'upcoming', name:'Upcoming', emoji:'📅'}, {id:'starred', name:'Starred', emoji:'⭐'}, {id:'all', name:'All', emoji:'🌐'}];
-    let html = smart.map(f => `
-        <button class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold ${selectedCategoryId === f.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}" data-category-id="${f.id}">
-            ${f.emoji} ${f.name}
-        </button>
-    `).join('');
-    html += categories.map(cat => `
-        <button class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold ${selectedCategoryId == cat.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}" data-category-id="${cat.id}">
-            ${cat.emoji} ${cat.name}
-        </button>
-    `).join('');
-    html += `<button id="manageCategoriesBtn" class="px-3 py-1.5 rounded-full text-sm font-semibold bg-gray-100 text-gray-600 whitespace-nowrap">+ Edit</button>`;
-    categoryFilterBar.innerHTML = html;
+// Helper: Calculate the *next* occurrence of a repeatable event
+function getEffectiveDate(event) {
+    let target = new Date(event.date + 'T00:00:00');
+    if (!event.repeat || event.repeat === 'never') return target;
 
-    categoryFilterBar.querySelectorAll('.filter-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            selectedCategoryId = tab.dataset.categoryId;
-            const f = [...smart, ...categories].find(x => x.id == selectedCategoryId);
-            viewTitle.innerText = f ? f.name : 'All';
-            renderCategoryFilterBar();
-            renderEvents(events);
-        });
-    });
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    
+    // If original date is in the future, don't shift it yet
+    if (target >= now) return target;
 
-    document.getElementById('manageCategoriesBtn').onclick = () => openManageCategories();
+    // Logic to shift date forward
+    while (target < now) {
+        if (event.repeat === 'daily') target.setDate(target.getDate() + 1);
+        else if (event.repeat === 'weekly') target.setDate(target.getDate() + 7);
+        else if (event.repeat === 'monthly') target.setMonth(target.getMonth() + 1);
+        else if (event.repeat === 'yearly') target.setFullYear(target.getFullYear() + 1);
+        else break; // Safety
+    }
+    return target;
 }
-
-function renderModalCategoryTabs() {
-    let html = categories.map(cat => `
-        <button class="modal-category-tab flex-1 py-1.5 px-3 rounded-lg text-sm font-semibold" data-category-id="${cat.id}">${cat.name}</button>
-    `).join('');
-    html += `<button class="modal-category-tab flex-1 py-1.5 px-3 rounded-lg text-sm font-semibold" data-category-id="none">None</button>`;
-    html += `<button id="modalManageCategoriesBtn" class="py-1.5 px-3 rounded-lg text-sm font-semibold bg-gray-700 text-white ml-2">⚙️</button>`;
-    modalCategoryTabs.innerHTML = html;
-
-    modalCategoryTabs.querySelectorAll('.modal-category-tab').forEach(tab => {
-        tab.onclick = () => {
-            modalCategoryTabs.querySelectorAll('.modal-category-tab').forEach(t => t.classList.remove('bg-blue-600'));
-            tab.classList.add('bg-blue-600');
-        };
-    });
-
-    document.getElementById('modalManageCategoriesBtn').onclick = (e) => {
-        e.stopPropagation();
-        const active = modalCategoryTabs.querySelector('.modal-category-tab.bg-blue-600');
-        tempSelectedCategoryId = active ? active.dataset.categoryId : null;
-        isReturningToEventModal = true;
-        newEventModal.classList.add('hidden');
-        openManageCategories();
-    };
-}
-
-function openManageCategories() {
-    modalOverlay.classList.remove('hidden');
-    manageCategoriesModal.classList.remove('hidden');
-    void manageCategoriesModal.offsetWidth;
-    manageCategoriesModal.classList.remove('scale-95', 'opacity-0');
-    renderCategoriesList();
-}
-
-document.getElementById('closeManageCategories').onclick = () => {
-    manageCategoriesModal.classList.add('scale-95', 'opacity-0');
-    setTimeout(() => {
-        manageCategoriesModal.classList.add('hidden');
-        if (isReturningToEventModal) {
-            newEventModal.classList.remove('hidden');
-            renderModalCategoryTabs();
-            if (tempSelectedCategoryId) {
-                const tab = modalCategoryTabs.querySelector(`[data-category-id="${tempSelectedCategoryId}"]`);
-                if (tab) tab.classList.add('bg-blue-600');
-            }
-            isReturningToEventModal = false;
-        } else {
-            modalOverlay.classList.add('hidden');
-        }
-    }, 200);
-};
 
 // Helpers
-function calculateDays(dateString) {
-    const target = new Date(dateString + 'T00:00:00'); // Force local time
+function calculateDays(dateObjOrString) {
+    const target = dateObjOrString instanceof Date ? dateObjOrString : new Date(dateObjOrString + 'T00:00:00');
     const now = new Date();
-    now.setHours(0,0,0,0); // Normalize 'now' to midnight
+    now.setHours(0,0,0,0);
     const diff = target - now;
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
@@ -418,6 +388,7 @@ function openModal(data = null) {
         eventStarredInput.checked = data.starred || false;
         eventUrlInput.value = data.url || '';
         eventMultiDayInput.checked = data.multi_day || false;
+        eventRepeatInput.value = data.repeat || 'never'; // NEW
         selectedIcon = data.icon || '🎉';
         currentEmojiDisplay.innerText = selectedIcon;
         const tab = modalCategoryTabs.querySelector(`[data-category-id="${data.category_id || 'none'}"]`);
@@ -430,6 +401,7 @@ function openModal(data = null) {
         eventStarredInput.checked = false;
         eventUrlInput.value = '';
         eventMultiDayInput.checked = false;
+        eventRepeatInput.value = 'never'; // NEW
         selectedIcon = '🎉';
         currentEmojiDisplay.innerText = '🎉';
         const tab = modalCategoryTabs.querySelector('[data-category-id="none"]');
@@ -451,6 +423,25 @@ cancelEventBtn.onclick = closeModal;
 // Initial Load
 checkUser();
 setupAuthListener();
+
+// NEW: Search Functionality
+searchEventsBtn.addEventListener('click', () => {
+    searchContainer.classList.remove('hidden');
+    mainSearchInput.focus();
+});
+
+closeSearchBtn.addEventListener('click', () => {
+    searchContainer.classList.add('hidden');
+    mainSearchInput.value = '';
+    searchQuery = '';
+    renderEvents(events); // Reset view
+});
+
+mainSearchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value;
+    renderEvents(events);
+});
+
 
 // Context Menu Logic
 window.handleEventClick = function(eventId) {
@@ -752,5 +743,6 @@ document.addEventListener('keydown', (e) => {
         else if (!quickNotesModal.classList.contains('hidden')) closeModal();
         else if (!moreInfoModal.classList.contains('hidden')) closeMoreInfoXBtn.click();
         else if (!newEventModal.classList.contains('hidden')) closeModal();
+        else if (!searchContainer.classList.contains('hidden')) closeSearchBtn.click(); // NEW
     }
 });
