@@ -27,7 +27,7 @@ let pickerContext = 'modal';
 let sortOption = 'date-asc';
 let showNotes = true;
 let showDays = true;
-let searchQuery = ''; // NEW: Track search state
+let searchQuery = '';
 
 // Elements
 const authScreen = document.getElementById('authScreen');
@@ -61,7 +61,7 @@ const eventTagsInput = document.getElementById('eventTags');
 const eventStarredInput = document.getElementById('eventStarred');
 const eventUrlInput = document.getElementById('eventUrl');
 const eventMultiDayInput = document.getElementById('eventMultiDay');
-const eventRepeatInput = document.getElementById('eventRepeat'); // NEW
+const eventRepeatInput = document.getElementById('eventRepeat');
 const modalCategoryTabs = document.getElementById('modalCategoryTabs');
 const emojiPicker = document.getElementById('emojiPicker');
 const selectedIconDisplay = document.getElementById('selectedIconDisplay');
@@ -93,16 +93,24 @@ const viewOptionsMenu = document.getElementById('viewOptionsMenu');
 const closeViewOptionsBtn = document.getElementById('closeViewOptions');
 const toggleNotesCheckbox = document.getElementById('toggleNotes');
 const toggleDaysCheckbox = document.getElementById('toggleDays');
-const searchEventsBtn = document.getElementById('searchEvents'); // NEW
-const searchContainer = document.getElementById('searchContainer'); // NEW
-const mainSearchInput = document.getElementById('mainSearchInput'); // NEW
-const closeSearchBtn = document.getElementById('closeSearchBtn'); // NEW
+const searchEventsBtn = document.getElementById('searchEvents');
+const searchContainer = document.getElementById('searchContainer');
+const mainSearchInput = document.getElementById('mainSearchInput');
+const closeSearchBtn = document.getElementById('closeSearchBtn');
 
 // Auth Logic
 async function checkUser() {
-    if (!supabaseClient) return;
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (user) showApp(); else showAuth();
+    if (!supabaseClient) {
+        showApp(); // Fallback to local mode
+        return;
+    }
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) showApp(); else showAuth();
+    } catch (e) {
+        console.error("Auth check failed:", e);
+        showAuth();
+    }
 }
 
 function setupAuthListener() {
@@ -126,6 +134,7 @@ function showAuth() {
 authForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     authError.classList.add('hidden');
+    if (!supabaseClient) return alert("Supabase not initialized.");
     const { error } = await supabaseClient.auth.signInWithPassword({ 
         email: authEmail.value, 
         password: authPassword.value 
@@ -136,7 +145,41 @@ authForm.addEventListener('submit', async (e) => {
     }
 });
 
-logoutBtn.addEventListener('click', () => supabaseClient.auth.signOut());
+logoutBtn.addEventListener('click', () => {
+    if (supabaseClient) supabaseClient.auth.signOut();
+    else showAuth();
+});
+
+// Persistence Helper
+function saveData() {
+    if (!supabaseClient || !supabaseClient.auth.getSession()) {
+        localStorage.setItem('countdown_events', JSON.stringify(events));
+        localStorage.setItem('countdown_categories', JSON.stringify(categories));
+    }
+}
+
+function loadFallbackData() {
+    const savedEvents = localStorage.getItem('countdown_events');
+    const savedCats = localStorage.getItem('countdown_categories');
+    
+    if (savedEvents) {
+        events = JSON.parse(savedEvents);
+    } else {
+        events = [
+            { title: 'Trip', date: '2026-08-23', color: 'bg-green-500', icon: '✈️', category_id: null, starred: true },
+            { title: 'Mom\'s Birthday', date: '2026-04-17', color: 'bg-pink-500', icon: '🎂', category_id: 1, starred: false },
+            { title: 'Exam 1', date: '2026-02-23', color: 'bg-blue-500', icon: '✏️', category_id: null, starred: true }
+        ];
+    }
+
+    if (savedCats) {
+        categories = JSON.parse(savedCats);
+    } else {
+        categories = [
+            { id: 1, name: 'Birthday', emoji: '🎂', color_default: 'bg-pink-500' }
+        ];
+    }
+}
 
 // Data Fetching
 async function init() {
@@ -154,18 +197,21 @@ async function init() {
                 supabaseClient.from('countdown_events').select('*')
             ]);
             
-            if (catRes.error) console.error("Categories fetch error:", catRes.error.message);
-            if (eventRes.error) console.error("Events fetch error:", eventRes.error.message);
+            if (catRes.error) throw catRes.error;
+            if (eventRes.error) throw eventRes.error;
 
             categories = catRes.data || [];
             events = eventRes.data || [];
-            
-            renderCategoryFilterBar();
-            renderEvents(events);
         } catch (err) {
-            console.error("Initialization error:", err);
+            console.error("Initialization error, using fallback:", err);
+            loadFallbackData();
         }
+    } else {
+        loadFallbackData();
     }
+    
+    renderCategoryFilterBar();
+    renderEvents(events);
 }
 
 // Event Handlers
@@ -177,7 +223,11 @@ saveEventBtn.addEventListener('click', async () => {
     const activeTab = modalCategoryTabs.querySelector('.modal-category-tab.bg-blue-600');
     const categoryId = activeTab ? (activeTab.dataset.categoryId === 'none' ? null : activeTab.dataset.categoryId) : null;
     
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    let userId = null;
+    if (supabaseClient) {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        userId = user?.id;
+    }
 
     const eventData = {
         title, 
@@ -189,13 +239,12 @@ saveEventBtn.addEventListener('click', async () => {
         starred: eventStarredInput?.checked || false,
         url: eventUrlInput?.value || '',
         multi_day: eventMultiDayInput?.checked || false,
-        repeat: eventRepeatInput?.value || 'never', // NEW
-        user_id: user?.id 
+        repeat: eventRepeatInput?.value || 'never',
+        user_id: userId 
     };
 
     const tempId = 'temp_' + Math.random().toString(36).substr(2, 9);
     
-    // Optimistic UI update
     if (editingEventId) {
         const idx = events.findIndex(e => (e.id || e.tempId) == editingEventId);
         if (idx !== -1) events[idx] = { ...events[idx], ...eventData };
@@ -205,6 +254,7 @@ saveEventBtn.addEventListener('click', async () => {
 
     renderEvents(events);
     closeModal();
+    saveData();
 
     if (supabaseClient) {
         const query = editingEventId && !String(editingEventId).startsWith('temp_')
@@ -212,11 +262,9 @@ saveEventBtn.addEventListener('click', async () => {
             : supabaseClient.from('countdown_events').insert([eventData]).select();
         
         const { data, error } = await query;
-        
         if (error) {
             console.error("Supabase Save Error:", error);
-            alert(`DATABASE ERROR: ${error.message}\n\nPlease ensure the 'countdown_events' table has all required columns.`);
-            init(); // Refresh to clear failed optimistic update
+            init(); 
         } else if (data && data.length > 0) {
             const idx = events.findIndex(e => e.tempId === tempId || e.id === editingEventId);
             if (idx !== -1) events[idx] = data[0];
@@ -227,14 +275,12 @@ saveEventBtn.addEventListener('click', async () => {
 
 // UI Rendering
 function renderEvents(eventsToRender) {
-    let filtered = eventsToRender;
+    let filtered = [...eventsToRender];
 
-    // Filter by Category
     if (selectedCategoryId === 'upcoming') filtered = filtered.filter(e => calculateDays(getEffectiveDate(e)) >= 0);
     else if (selectedCategoryId === 'starred') filtered = filtered.filter(e => e.starred);
     else if (selectedCategoryId !== 'all') filtered = filtered.filter(e => e.category_id == selectedCategoryId);
 
-    // NEW: Filter by Search Query
     if (searchQuery) {
         const lowerQ = searchQuery.toLowerCase();
         filtered = filtered.filter(e => 
@@ -243,24 +289,19 @@ function renderEvents(eventsToRender) {
         );
     }
 
-    // Sorting (Using Effective Date for Repeatable Events)
     filtered.sort((a, b) => {
         const dateA = getEffectiveDate(a);
         const dateB = getEffectiveDate(b);
-        
         if (sortOption === 'date-asc') return dateA - dateB;
         if (sortOption === 'date-desc') return dateB - dateA;
         if (sortOption === 'alpha') return a.title.localeCompare(b.title);
         return 0;
     });
 
-    // Render Grid
     gridView.innerHTML = filtered.map(event => {
         const effectiveDate = getEffectiveDate(event);
         const days = calculateDays(effectiveDate);
         const cat = categories.find(c => c.id == event.category_id);
-        
-        // FIX: Prioritize Event Icon
         const displayIcon = event.icon || (cat ? cat.emoji : '📅');
         
         return `
@@ -281,7 +322,6 @@ function renderEvents(eventsToRender) {
         `;
     }).join('');
 
-    // Render Timeline
     const grouped = filtered.reduce((acc, event) => {
         const catId = event.category_id || 'none';
         if (!acc[catId]) acc[catId] = [];
@@ -301,7 +341,6 @@ function renderEvents(eventsToRender) {
                             const effectiveDate = getEffectiveDate(event);
                             const days = calculateDays(effectiveDate);
                             const displayIcon = event.icon || (cat ? cat.emoji : '📅');
-                            
                             return `
                                 <div class="flex items-start gap-6 relative group cursor-pointer" onclick="handleEventClick('${event.id || event.tempId}')">
                                     <div class="w-16 text-right pt-1 flex-shrink-0">
@@ -328,35 +367,27 @@ function renderEvents(eventsToRender) {
     }).join('');
 }
 
-// Helper: Calculate the *next* occurrence of a repeatable event
 function getEffectiveDate(event) {
+    if (!event.date) return new Date();
     let target = new Date(event.date + 'T00:00:00');
     if (!event.repeat || event.repeat === 'never') return target;
-
-    const now = new Date();
-    now.setHours(0,0,0,0);
-    
-    // If original date is in the future, don't shift it yet
+    const now = new Date(); now.setHours(0,0,0,0);
     if (target >= now) return target;
-
-    // Logic to shift date forward
     while (target < now) {
         if (event.repeat === 'daily') target.setDate(target.getDate() + 1);
         else if (event.repeat === 'weekly') target.setDate(target.getDate() + 7);
         else if (event.repeat === 'monthly') target.setMonth(target.getMonth() + 1);
         else if (event.repeat === 'yearly') target.setFullYear(target.getFullYear() + 1);
-        else break; // Safety
+        else break;
     }
     return target;
 }
 
-// Helpers
 function calculateDays(dateObjOrString) {
     const target = dateObjOrString instanceof Date ? dateObjOrString : new Date(dateObjOrString + 'T00:00:00');
-    const now = new Date();
-    now.setHours(0,0,0,0);
+    const now = new Date(); now.setHours(0,0,0,0);
     const diff = target - now;
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+    return Math.ceil(diff / 86400000);
 }
 
 function updateViewToggleUI() {
@@ -388,7 +419,7 @@ function openModal(data = null) {
         eventStarredInput.checked = data.starred || false;
         eventUrlInput.value = data.url || '';
         eventMultiDayInput.checked = data.multi_day || false;
-        eventRepeatInput.value = data.repeat || 'never'; // NEW
+        eventRepeatInput.value = data.repeat || 'never';
         selectedIcon = data.icon || '🎉';
         currentEmojiDisplay.innerText = selectedIcon;
         const tab = modalCategoryTabs.querySelector(`[data-category-id="${data.category_id || 'none'}"]`);
@@ -401,7 +432,7 @@ function openModal(data = null) {
         eventStarredInput.checked = false;
         eventUrlInput.value = '';
         eventMultiDayInput.checked = false;
-        eventRepeatInput.value = 'never'; // NEW
+        eventRepeatInput.value = 'never';
         selectedIcon = '🎉';
         currentEmojiDisplay.innerText = '🎉';
         const tab = modalCategoryTabs.querySelector('[data-category-id="none"]');
@@ -420,11 +451,7 @@ function closeModal() {
 addEventBtn.onclick = () => openModal();
 cancelEventBtn.onclick = closeModal;
 
-// Initial Load
-checkUser();
-setupAuthListener();
-
-// NEW: Search Functionality
+// Search
 searchEventsBtn.addEventListener('click', () => {
     searchContainer.classList.remove('hidden');
     mainSearchInput.focus();
@@ -434,7 +461,7 @@ closeSearchBtn.addEventListener('click', () => {
     searchContainer.classList.add('hidden');
     mainSearchInput.value = '';
     searchQuery = '';
-    renderEvents(events); // Reset view
+    renderEvents(events);
 });
 
 mainSearchInput.addEventListener('input', (e) => {
@@ -442,142 +469,85 @@ mainSearchInput.addEventListener('input', (e) => {
     renderEvents(events);
 });
 
+// Category Management
+function renderCategoryFilterBar() {
+    const smart = [{id:'upcoming', name:'Upcoming', emoji:'📅'}, {id:'starred', name:'Starred', emoji:'⭐'}, {id:'all', name:'All', emoji:'🌐'}];
+    let html = smart.map(f => `
+        <button class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold ${selectedCategoryId === f.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}" data-category-id="${f.id}">
+            ${f.emoji} ${f.name}
+        </button>
+    `).join('');
+    html += categories.map(cat => `
+        <button class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold ${selectedCategoryId == cat.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}" data-category-id="${cat.id}">
+            ${cat.emoji} ${cat.name}
+        </button>
+    `).join('');
+    html += `<button id="manageCategoriesBtn" class="px-3 py-1.5 rounded-full text-sm font-semibold bg-gray-100 text-gray-600 whitespace-nowrap">+ Edit</button>`;
+    categoryFilterBar.innerHTML = html;
 
-// Context Menu Logic
-window.handleEventClick = function(eventId) {
-    const e = window.event;
-    if (e) {
-        e.stopPropagation();
-        e.preventDefault();
-    }
-    const x = e?.clientX || 0;
-    const y = e?.clientY || 0;
-    openContextMenu(x, y, eventId);
-};
-
-function openContextMenu(x, y, eventId) {
-    contextEventId = eventId;
-    const event = events.find(e => (e.id || e.tempId) == eventId);
-    if (!event) return;
-
-    starLabel.innerText = event.starred ? 'Unstar' : 'Star';
-
-    contextMenu.style.left = `${Math.min(x, window.innerWidth - 240)}px`;
-    contextMenu.style.top = `${Math.min(y, window.innerHeight - 400)}px`;
-    contextMenu.classList.remove('hidden');
-    void contextMenu.offsetWidth;
-    contextMenu.classList.remove('opacity-0');
-}
-
-function closeContextMenu() {
-    contextMenu.classList.add('opacity-0');
-    emojiPicker.classList.add('hidden');
-    setTimeout(() => {
-        contextMenu.classList.add('hidden');
-    }, 200);
-}
-
-window.addEventListener('mousedown', (e) => {
-    if (contextMenu.classList.contains('hidden') || contextMenu.classList.contains('opacity-0')) return;
-    if (!contextMenu.contains(e.target) && !emojiPicker.contains(e.target)) {
-        closeContextMenu();
-    }
-});
-
-menuEdit.addEventListener('click', () => {
-    const event = events.find(e => (e.id || e.tempId) == contextEventId);
-    if (event) openModal(event);
-    closeContextMenu();
-});
-
-menuDelete.addEventListener('click', async () => {
-    if (!contextEventId) return;
-    
-    if (confirm('Are you sure you want to delete this event?')) {
-        const index = events.findIndex(e => (e.id || e.tempId) == contextEventId);
-        if (index !== -1) {
-            const eventToDelete = events[index];
-            events.splice(index, 1);
-            
-            if (supabaseClient && eventToDelete.id) {
-                await supabaseClient.from('countdown_events').delete().eq('id', eventToDelete.id);
-            }
+    categoryFilterBar.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            selectedCategoryId = tab.dataset.categoryId;
+            const f = [...smart, ...categories].find(x => x.id == selectedCategoryId);
+            viewTitle.innerText = f ? f.name : 'All';
+            renderCategoryFilterBar();
             renderEvents(events);
-        }
-    }
-    closeContextMenu();
-});
+        });
+    });
 
-menuDuplicate.addEventListener('click', async () => {
-    const event = events.find(e => (e.id || e.tempId) == contextEventId);
-    if (event) {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        const duplicateData = { ...event, title: `${event.title} (Copy)`, user_id: user?.id };
-        delete duplicateData.id; delete duplicateData.tempId;
-        if (supabaseClient) {
-            const { data } = await supabaseClient.from('countdown_events').insert([duplicateData]).select();
-            if (data) events.push(data[0]);
-        }
-        renderEvents(events);
-    }
-    closeContextMenu();
-});
+    document.getElementById('manageCategoriesBtn').onclick = () => openManageCategories();
+}
 
-menuNotes.addEventListener('click', () => {
-    const event = events.find(e => (e.id || e.tempId) == contextEventId);
-    if (event) {
+function renderModalCategoryTabs() {
+    let html = categories.map(cat => `
+        <button class="modal-category-tab flex-1 py-1.5 px-3 rounded-lg text-sm font-semibold" data-category-id="${cat.id}">${cat.name}</button>
+    `).join('');
+    html += `<button class="modal-category-tab flex-1 py-1.5 px-3 rounded-lg text-sm font-semibold" data-category-id="none">None</button>`;
+    html += `<button id="modalManageCategoriesBtn" class="py-1.5 px-3 rounded-lg text-sm font-semibold bg-gray-700 text-white ml-2">⚙️</button>`;
+    modalCategoryTabs.innerHTML = html;
+
+    modalCategoryTabs.querySelectorAll('.modal-category-tab').forEach(tab => {
+        tab.onclick = () => {
+            modalCategoryTabs.querySelectorAll('.modal-category-tab').forEach(t => t.classList.remove('bg-blue-600'));
+            tab.classList.add('bg-blue-600');
+        };
+    });
+
+    document.getElementById('modalManageCategoriesBtn').onclick = (e) => {
+        e.stopPropagation();
+        const active = modalCategoryTabs.querySelector('.modal-category-tab.bg-blue-600');
+        tempSelectedCategoryId = active ? active.dataset.categoryId : null;
+        isReturningToEventModal = true;
         newEventModal.classList.add('hidden');
-        moreInfoModal.classList.add('hidden');
-        manageCategoriesModal.classList.add('hidden');
-        modalOverlay.classList.remove('hidden');
-        quickNotesInput.value = event.notes || '';
-        quickNotesModal.classList.remove('hidden');
-        void quickNotesModal.offsetWidth;
-        quickNotesModal.classList.remove('scale-95', 'opacity-0');
-        setTimeout(() => quickNotesInput.focus(), 100);
-    }
-    closeContextMenu();
-});
+        openManageCategories();
+    };
+}
 
-saveQuickNotesBtn.addEventListener('click', async () => {
-    const index = events.findIndex(e => (e.id || e.tempId) == contextEventId);
-    if (index !== -1) {
-        const notes = quickNotesInput.value.trim();
-        events[index].notes = notes;
-        if (supabaseClient && events[index].id) await supabaseClient.from('countdown_events').update({ notes }).eq('id', events[index].id);
-        renderEvents(events);
-    }
-    closeModal();
-});
+function openManageCategories() {
+    modalOverlay.classList.remove('hidden');
+    manageCategoriesModal.classList.remove('hidden');
+    void manageCategoriesModal.offsetWidth;
+    manageCategoriesModal.classList.remove('scale-95', 'opacity-0');
+    renderCategoriesList();
+}
 
-cancelQuickNotesBtn.addEventListener('click', closeModal);
-
-menuStar.addEventListener('click', async () => {
-    const index = events.findIndex(e => (e.id || e.tempId) == contextEventId);
-    if (index !== -1) {
-        events[index].starred = !events[index].starred;
-        if (supabaseClient && events[index].id) await supabaseClient.from('countdown_events').update({ starred: events[index].starred }).eq('id', events[index].id);
-        renderEvents(events);
-    }
-    closeContextMenu();
-});
-
-addMoreInfoBtn.addEventListener('click', () => {
-    newEventModal.classList.add('hidden');
-    moreInfoModal.classList.remove('hidden');
-    void moreInfoModal.offsetWidth;
-    moreInfoModal.classList.remove('scale-95', 'opacity-0');
-});
-
-closeMoreInfoBtn.addEventListener('click', () => {
-    moreInfoModal.classList.add('scale-95', 'opacity-0');
+document.getElementById('closeManageCategories').onclick = () => {
+    manageCategoriesModal.classList.add('scale-95', 'opacity-0');
     setTimeout(() => {
-        moreInfoModal.classList.add('hidden');
-        newEventModal.classList.remove('hidden');
-        void newEventModal.offsetWidth;
-        newEventModal.classList.remove('scale-95', 'opacity-0');
+        manageCategoriesModal.classList.add('hidden');
+        if (isReturningToEventModal) {
+            newEventModal.classList.remove('hidden');
+            renderModalCategoryTabs();
+            if (tempSelectedCategoryId) {
+                const tab = modalCategoryTabs.querySelector(`[data-category-id="${tempSelectedCategoryId}"]`);
+                if (tab) tab.classList.add('bg-blue-600');
+            }
+            isReturningToEventModal = false;
+        } else {
+            modalOverlay.classList.add('hidden');
+        }
     }, 200);
-});
+};
 
 function renderCategoriesList() {
     categoriesListEl.innerHTML = categories.map(cat => `
@@ -608,13 +578,14 @@ window.deleteCategory = async (id) => {
     categories = categories.filter(c => c.id != id);
     renderCategoriesList();
     renderCategoryFilterBar();
+    saveData();
 };
 
 saveNewCategoryBtn.onclick = async () => {
     const name = newCategoryNameInput.value.trim();
     if (!name) return;
-    const { data: { user } } = await supabaseClient.auth.getUser();
     const emoji = newCategoryEmojiBtn.innerText;
+    
     if (editingCategoryId) {
         const index = categories.findIndex(c => c.id == editingCategoryId);
         if (index !== -1) {
@@ -624,125 +595,200 @@ saveNewCategoryBtn.onclick = async () => {
         editingCategoryId = null;
         saveNewCategoryBtn.innerText = 'Add';
     } else {
-        const newCat = { name, emoji, user_id: user?.id };
+        let userId = null;
+        if (supabaseClient) {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            userId = user?.id;
+        }
+        const newCat = { name, emoji, user_id: userId };
         if (supabaseClient) {
             const { data } = await supabaseClient.from('categories').insert([newCat]).select();
             if (data) categories.push(data[0]);
+        } else {
+            newCat.id = Date.now();
+            categories.push(newCat);
         }
     }
     newCategoryNameInput.value = '';
     newCategoryEmojiBtn.innerText = '📁';
     renderCategoriesList();
     renderCategoryFilterBar();
+    saveData();
 };
 
-// Emoji Picker Logic
+// Context Menu
+window.handleEventClick = function(eventId) {
+    const e = window.event;
+    if (e) { e.stopPropagation(); e.preventDefault(); }
+    openContextMenu(e?.clientX || 0, e?.clientY || 0, eventId);
+};
+
+function openContextMenu(x, y, eventId) {
+    contextEventId = eventId;
+    const event = events.find(e => (e.id || e.tempId) == eventId);
+    if (!event) return;
+    starLabel.innerText = event.starred ? 'Unstar' : 'Star';
+    contextMenu.style.left = `${Math.min(x, window.innerWidth - 240)}px`;
+    contextMenu.style.top = `${Math.min(y, window.innerHeight - 400)}px`;
+    contextMenu.classList.remove('hidden');
+    void contextMenu.offsetWidth;
+    contextMenu.classList.remove('opacity-0');
+}
+
+function closeContextMenu() {
+    contextMenu.classList.add('opacity-0');
+    setTimeout(() => contextMenu.classList.add('hidden'), 200);
+}
+
+window.addEventListener('mousedown', (e) => {
+    if (!contextMenu.contains(e.target) && !emojiPicker.contains(e.target)) closeContextMenu();
+});
+
+menuEdit.onclick = () => {
+    const event = events.find(e => (e.id || e.tempId) == contextEventId);
+    if (event) openModal(event);
+    closeContextMenu();
+};
+
+menuDelete.onclick = async () => {
+    if (!contextEventId || !confirm('Delete event?')) return;
+    const index = events.findIndex(e => (e.id || e.tempId) == contextEventId);
+    if (index !== -1) {
+        const id = events[index].id;
+        events.splice(index, 1);
+        if (supabaseClient && id) await supabaseClient.from('countdown_events').delete().eq('id', id);
+        renderEvents(events);
+        saveData();
+    }
+    closeContextMenu();
+};
+
+menuStar.onclick = async () => {
+    const index = events.findIndex(e => (e.id || e.tempId) == contextEventId);
+    if (index !== -1) {
+        events[index].starred = !events[index].starred;
+        if (supabaseClient && events[index].id) await supabaseClient.from('countdown_events').update({ starred: events[index].starred }).eq('id', events[index].id);
+        renderEvents(events);
+        saveData();
+    }
+    closeContextMenu();
+};
+
+menuNotes.onclick = () => {
+    const event = events.find(e => (e.id || e.tempId) == contextEventId);
+    if (event) {
+        newEventModal.classList.add('hidden');
+        modalOverlay.classList.remove('hidden');
+        quickNotesInput.value = event.notes || '';
+        quickNotesModal.classList.remove('hidden');
+        void quickNotesModal.offsetWidth;
+        quickNotesModal.classList.remove('scale-95', 'opacity-0');
+        setTimeout(() => quickNotesInput.focus(), 100);
+    }
+    closeContextMenu();
+};
+
+saveQuickNotesBtn.onclick = async () => {
+    const index = events.findIndex(e => (e.id || e.tempId) == contextEventId);
+    if (index !== -1) {
+        const notes = quickNotesInput.value.trim();
+        events[index].notes = notes;
+        if (supabaseClient && events[index].id) await supabaseClient.from('countdown_events').update({ notes }).eq('id', events[index].id);
+        renderEvents(events);
+        saveData();
+    }
+    closeModal();
+};
+
+// Emoji Picker
 function initEmojiPicker() {
     renderEmojis(COMMON_EMOJIS);
-    menuUpdateIcon.addEventListener('click', (e) => {
+    menuUpdateIcon.onclick = (e) => {
         e.stopPropagation(); pickerContext = 'context';
         const rect = menuUpdateIcon.getBoundingClientRect();
         positionEmojiPicker(rect.left - 260, rect.top);
         emojiPicker.classList.toggle('hidden');
-        if (!emojiPicker.classList.contains('hidden')) emojiSearch.focus();
-    });
-    selectedIconDisplay.addEventListener('click', (e) => {
+    };
+    selectedIconDisplay.onclick = (e) => {
         e.stopPropagation(); pickerContext = 'modal';
         const rect = selectedIconDisplay.getBoundingClientRect();
         positionEmojiPicker(rect.right - 256, rect.top - 200);
         emojiPicker.classList.toggle('hidden');
-        if (!emojiPicker.classList.contains('hidden')) emojiSearch.focus();
-    });
-    newCategoryEmojiBtn.addEventListener('click', (e) => {
+    };
+    newCategoryEmojiBtn.onclick = (e) => {
         e.stopPropagation(); pickerContext = 'category';
         const rect = newCategoryEmojiBtn.getBoundingClientRect();
         positionEmojiPicker(rect.left, rect.top - 250);
         emojiPicker.classList.toggle('hidden');
-        if (!emojiPicker.classList.contains('hidden')) emojiSearch.focus();
-    });
-    emojiSearch.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase().trim();
-        renderEmojis(query ? COMMON_EMOJIS.filter(emoji => emoji.char.includes(query) || emoji.keywords.includes(query) || emoji.category.toLowerCase().includes(query)) : COMMON_EMOJIS);
-    });
-    document.addEventListener('mousedown', (e) => {
-        if (!emojiPicker.classList.contains('hidden') && !emojiPicker.contains(e.target) && !selectedIconDisplay.contains(e.target) && !menuUpdateIcon.contains(e.target) && !newCategoryEmojiBtn.contains(e.target)) emojiPicker.classList.add('hidden');
-    });
+    };
+    emojiSearch.oninput = (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        renderEmojis(q ? COMMON_EMOJIS.filter(em => em.char.includes(q) || em.keywords.includes(q)) : COMMON_EMOJIS);
+    };
 }
 
 function positionEmojiPicker(x, y) {
-    const maxX = window.innerWidth - 270; const maxY = window.innerHeight - 250;
-    emojiPicker.style.left = `${Math.max(10, Math.min(x, maxX))}px`;
-    emojiPicker.style.top = `${Math.max(10, Math.min(y, maxY))}px`;
+    emojiPicker.style.left = `${Math.max(10, Math.min(x, window.innerWidth - 270))}px`;
+    emojiPicker.style.top = `${Math.max(10, Math.min(y, window.innerHeight - 250))}px`;
 }
 
-function renderEmojis(emojiArray) {
+function renderEmojis(arr) {
     const isSearch = emojiSearch.value.length > 0;
     if (isSearch) {
         emojiList.className = "grid grid-cols-6 gap-1 p-2 max-h-48 overflow-y-auto custom-scrollbar";
-        emojiList.innerHTML = emojiArray.map(emoji => `<button class="emoji-item w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-xl transition-colors" data-emoji="${emoji.char}">${emoji.char}</button>`).join('');
+        emojiList.innerHTML = arr.map(em => `<button class="emoji-item w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-xl" data-emoji="${em.char}">${em.char}</button>`).join('');
     } else {
         const groups = {};
-        emojiArray.forEach(emoji => { if (!groups[emoji.category]) groups[emoji.category] = []; groups[emoji.category].push(emoji); });
+        arr.forEach(em => { if (!groups[em.category]) groups[em.category] = []; groups[em.category].push(em); });
         emojiList.className = "flex flex-col p-2 max-h-48 overflow-y-auto custom-scrollbar";
-        let html = '';
-        for (const category in groups) {
-            html += `<div class="mb-3"><h3 class="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1.5 px-1">${category}</h3><div class="grid grid-cols-6 gap-1">${groups[category].map(emoji => `<button class="emoji-item w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-xl transition-colors" data-emoji="${emoji.char}">${emoji.char}</button>`).join('')}</div></div>`;
-        }
-        emojiList.innerHTML = html;
+        emojiList.innerHTML = Object.entries(groups).map(([cat, ems]) => `
+            <div class="mb-3">
+                <h3 class="text-[10px] uppercase text-gray-400 font-bold mb-1.5 px-1">${cat}</h3>
+                <div class="grid grid-cols-6 gap-1">
+                    ${ems.map(em => `<button class="emoji-item w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-xl" data-emoji="${em.char}">${em.char}</button>`).join('')}
+                </div>
+            </div>
+        `).join('');
     }
     document.querySelectorAll('.emoji-item').forEach(item => {
-        item.addEventListener('click', async () => {
-            const emoji = item.dataset.emoji;
-            if (pickerContext === 'modal') { selectedIcon = emoji; currentEmojiDisplay.innerText = emoji; }
+        item.onclick = async () => {
+            const em = item.dataset.emoji;
+            if (pickerContext === 'modal') { selectedIcon = em; currentEmojiDisplay.innerText = em; }
             else if (pickerContext === 'context' && contextEventId) {
-                const index = events.findIndex(e => (e.id || e.tempId) == contextEventId);
-                if (index !== -1) {
-                    events[index].icon = emoji;
-                    if (supabaseClient && events[index].id) await supabaseClient.from('countdown_events').update({ icon: emoji }).eq('id', events[index].id);
+                const idx = events.findIndex(e => (e.id || e.tempId) == contextEventId);
+                if (idx !== -1) {
+                    events[idx].icon = em;
+                    if (supabaseClient && events[idx].id) await supabaseClient.from('countdown_events').update({ icon: em }).eq('id', events[idx].id);
                     renderEvents(events);
                 }
-                closeContextMenu();
-            } else if (pickerContext === 'category') newCategoryEmojiBtn.innerText = emoji;
+            } else if (pickerContext === 'category') newCategoryEmojiBtn.innerText = em;
             emojiPicker.classList.add('hidden');
-        });
+        };
     });
 }
 
 initEmojiPicker();
-closeNewEventModalBtn.addEventListener('click', closeModal);
-closeMoreInfoXBtn.addEventListener('click', () => {
-    moreInfoModal.classList.add('scale-95', 'opacity-0');
-    setTimeout(() => { moreInfoModal.classList.add('hidden'); newEventModal.classList.remove('hidden'); void newEventModal.offsetWidth; newEventModal.classList.remove('scale-95', 'opacity-0'); }, 200);
-});
-closeQuickNotesXBtn.addEventListener('click', closeModal);
-closeEmojiPickerBtn.addEventListener('click', () => emojiPicker.classList.add('hidden'));
-viewOptionsBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); viewOptionsMenu.classList.toggle('hidden');
-    if (!viewOptionsMenu.classList.contains('hidden')) viewOptionsMenu.classList.remove('opacity-0'); else viewOptionsMenu.classList.add('opacity-0');
-});
-closeViewOptionsBtn.addEventListener('click', () => { viewOptionsMenu.classList.add('opacity-0'); setTimeout(() => viewOptionsMenu.classList.add('hidden'), 200); });
+checkUser();
+setupAuthListener();
+
+// View Options
+viewOptionsBtn.onclick = (e) => { e.stopPropagation(); viewOptionsMenu.classList.toggle('hidden'); viewOptionsMenu.classList.toggle('opacity-0'); };
 document.querySelectorAll('.sort-option').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.onclick = () => {
         sortOption = btn.dataset.sort;
         document.querySelectorAll('.sort-option .check').forEach(c => c.classList.add('hidden'));
         btn.querySelector('.check').classList.remove('hidden');
-        document.querySelectorAll('.sort-option').forEach(b => { b.classList.remove('bg-blue-600', 'text-white'); b.classList.add('hover:bg-white/10', 'text-gray-300'); });
-        btn.classList.remove('hover:bg-white/10', 'text-gray-300'); btn.classList.add('bg-blue-600', 'text-white');
         renderEvents(events);
-    });
+    };
 });
-toggleNotesCheckbox.addEventListener('change', (e) => { showNotes = e.target.checked; renderEvents(events); });
-toggleDaysCheckbox.addEventListener('change', (e) => { showDays = e.target.checked; renderEvents(events); });
-document.addEventListener('click', (e) => { if (!viewOptionsMenu.classList.contains('hidden') && !viewOptionsMenu.contains(e.target) && !viewOptionsBtn.contains(e.target)) { viewOptionsMenu.classList.add('opacity-0'); setTimeout(() => viewOptionsMenu.classList.add('hidden'), 200); } });
+toggleNotesCheckbox.onchange = (e) => { showNotes = e.target.checked; renderEvents(events); };
+toggleDaysCheckbox.onchange = (e) => { showDays = e.target.checked; renderEvents(events); };
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-        if (!emojiPicker.classList.contains('hidden')) emojiPicker.classList.add('hidden');
-        else if (!viewOptionsMenu.classList.contains('hidden')) { viewOptionsMenu.classList.add('opacity-0'); setTimeout(() => viewOptionsMenu.classList.add('hidden'), 200); }
-        else if (!contextMenu.classList.contains('hidden') && !contextMenu.classList.contains('opacity-0')) closeContextMenu();
-        else if (!manageCategoriesModal.classList.contains('hidden')) closeManageCategoriesBtn.click();
-        else if (!quickNotesModal.classList.contains('hidden')) closeModal();
-        else if (!moreInfoModal.classList.contains('hidden')) closeMoreInfoXBtn.click();
-        else if (!newEventModal.classList.contains('hidden')) closeModal();
-        else if (!searchContainer.classList.contains('hidden')) closeSearchBtn.click(); // NEW
+        emojiPicker.classList.add('hidden');
+        viewOptionsMenu.classList.add('hidden');
+        closeContextMenu();
+        closeModal();
+        searchContainer.classList.add('hidden');
     }
 });
