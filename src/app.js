@@ -1,4 +1,3 @@
-console.log("🚀 app.js loaded");
 import { supabaseClient, state, saveData, loadFallbackData, initSupabase } from './storage.js';
 import { checkUser, setupAuthListener, signIn, signOut } from './auth.js';
 import { renderEvents, renderCategoryFilterBar, renderModalCategoryTabs, renderCategoriesList } from './render.js';
@@ -25,9 +24,7 @@ const categoryFilterBar = document.getElementById('categoryFilterBar');
 const eventTitleInput = document.getElementById('eventTitle');
 const eventNotesInput = document.getElementById('eventNotes');
 const eventDateInput = document.getElementById('eventDateInput');
-const eventTagsInput = document.getElementById('eventTags');
 const eventStarredInput = document.getElementById('eventStarred');
-const eventUrlInput = document.getElementById('eventUrl');
 const eventMultiDayInput = document.getElementById('eventMultiDay');
 const eventRepeatInput = document.getElementById('eventRepeat');
 const unitYearInput = document.getElementById('unitYear');
@@ -207,7 +204,6 @@ saveEventBtn.addEventListener('click', async () => {
         week: unitWeekInput?.checked || false,
         day: unitDayInput?.checked ?? true
     };
-    console.log('Saving display_units:', displayUnits);
 
     const eventData = {
         title,
@@ -215,9 +211,7 @@ saveEventBtn.addEventListener('click', async () => {
         icon: state.selectedIcon,
         category_id: categoryId,
         notes: eventNotesInput.value.trim(),
-        tags: eventTagsInput?.value || '',
         starred: eventStarredInput?.checked || false,
-        url: eventUrlInput?.value || '',
         multi_day: eventMultiDayInput?.checked || false,
         repeat: eventRepeatInput?.value || 'never',
         display_units: displayUnits,
@@ -263,24 +257,20 @@ function updateViewToggleUI() {
 }
 
 function applyScreenshotMode() {
-    const bottomNav = document.querySelector('.fixed.bottom-10');
+    const bottomNav = document.querySelector('.fixed.bottom-6, .fixed.bottom-10');
     const headerControls = document.getElementById('headerControls');
     const appContent = document.getElementById('appContent');
 
     if (state.screenshotMode) {
-        // Hide UI elements
         if (bottomNav) bottomNav.classList.add('hidden');
         if (headerControls) headerControls.classList.add('hidden');
         if (categoryFilterBar) categoryFilterBar.classList.add('hidden');
-        // Compact the content
         if (appContent) appContent.classList.add('screenshot-mode');
         document.body.classList.add('screenshot-mode');
     } else {
-        // Show UI elements
         if (bottomNav) bottomNav.classList.remove('hidden');
         if (headerControls) headerControls.classList.remove('hidden');
         if (categoryFilterBar) categoryFilterBar.classList.remove('hidden');
-        // Remove compact mode
         if (appContent) appContent.classList.remove('screenshot-mode');
         document.body.classList.remove('screenshot-mode');
     }
@@ -303,17 +293,16 @@ function openModal(data = null) {
         eventTitleInput.value = data.title;
         eventDateInput.value = data.date;
         eventNotesInput.value = data.notes || '';
-        eventTagsInput.value = data.tags || '';
-        eventStarredInput.checked = data.starred || false;
-        eventUrlInput.value = data.url || '';
-        eventMultiDayInput.checked = data.multi_day || false;
-        eventRepeatInput.value = data.repeat || 'never';
-        // Load display units (default to day only if not set)
+        if (eventStarredInput) eventStarredInput.checked = data.starred || false;
+        if (eventMultiDayInput) eventMultiDayInput.checked = data.multi_day || false;
+        if (eventRepeatInput) eventRepeatInput.value = data.repeat || 'never';
+        
         const units = data.display_units || { year: false, month: false, week: false, day: true };
         if (unitYearInput) unitYearInput.checked = units.year;
         if (unitMonthInput) unitMonthInput.checked = units.month;
         if (unitWeekInput) unitWeekInput.checked = units.week;
         if (unitDayInput) unitDayInput.checked = units.day;
+        
         state.selectedIcon = data.icon || '🎉';
         currentEmojiDisplay.innerText = state.selectedIcon;
         const tab = modalCategoryTabs.querySelector(`[data-category-id="${data.category_id || 'none'}"]`);
@@ -322,16 +311,15 @@ function openModal(data = null) {
         eventTitleInput.value = '';
         eventDateInput.value = new Date().toISOString().split('T')[0];
         eventNotesInput.value = '';
-        eventTagsInput.value = '';
-        eventStarredInput.checked = false;
-        eventUrlInput.value = '';
-        eventMultiDayInput.checked = false;
-        eventRepeatInput.value = 'never';
-        // Reset display units to default (day only)
+        if (eventStarredInput) eventStarredInput.checked = false;
+        if (eventMultiDayInput) eventMultiDayInput.checked = false;
+        if (eventRepeatInput) eventRepeatInput.value = 'never';
+        
         if (unitYearInput) unitYearInput.checked = false;
         if (unitMonthInput) unitMonthInput.checked = false;
         if (unitWeekInput) unitWeekInput.checked = false;
         if (unitDayInput) unitDayInput.checked = true;
+        
         state.selectedIcon = '🎉';
         currentEmojiDisplay.innerText = '🎉';
         const tab = modalCategoryTabs.querySelector('[data-category-id="none"]');
@@ -340,7 +328,6 @@ function openModal(data = null) {
 }
 
 function closeModal() {
-    // Apply exit animations to all modals
     [newEventModal, quickNotesModal, moreInfoModal, manageCategoriesModal].forEach(modal => {
         if (modal) modal.classList.add('scale-95', 'opacity-0');
     });
@@ -353,7 +340,6 @@ function closeModal() {
     }, 200);
 }
 
-// Wire up all "X" and "Cancel" buttons to closeModal
 [
     cancelEventBtn, closeNewEventModalBtn,
     closeMoreInfoXBtn,
@@ -363,12 +349,10 @@ function closeModal() {
     if (btn) btn.onclick = closeModal;
 });
 
-// Open modal when clicking "+ New Event"
 if (addEventBtn) {
     addEventBtn.onclick = () => openModal();
 }
 
-// Pop-up specific close buttons
 if (closeEmojiPickerBtn) {
     closeEmojiPickerBtn.onclick = () => emojiPicker.classList.add('hidden');
 }
@@ -491,12 +475,9 @@ function openContextMenu(x, y, eventId) {
     if (!event) return;
     starLabel.innerText = event.starred ? 'Unstar' : 'Star';
 
-    // Get menu dimensions
-    const menuWidth = 224; // w-56 = 14rem = 224px
-    const menuHeight = 380; // approximate height with touch-friendly buttons
-    const padding = 16; // safe padding from edges
-
-    // On small screens, center the menu horizontally
+    const menuWidth = 224;
+    const menuHeight = 380;
+    const padding = 16;
     const isMobile = window.innerWidth < 480;
     let posX, posY;
 
@@ -506,7 +487,6 @@ function openContextMenu(x, y, eventId) {
         posX = Math.min(Math.max(padding, x), window.innerWidth - menuWidth - padding);
     }
 
-    // Position vertically - prefer below click, but flip if needed
     if (y + menuHeight + padding > window.innerHeight) {
         posY = Math.max(padding, y - menuHeight);
     } else {
@@ -528,14 +508,11 @@ function closeContextMenu() {
     }, 200);
 }
 
-// Close popups when clicking outside
 window.addEventListener('click', (e) => {
-    // Close context menu when clicking outside (but not if clicking emoji picker)
     if (!contextMenu.contains(e.target) && !emojiPicker.contains(e.target)) {
         closeContextMenu();
     }
 
-    // Close emoji picker when clicking outside
     if (!emojiPicker.contains(e.target) &&
         !selectedIconDisplay?.contains(e.target) &&
         !menuUpdateIcon?.contains(e.target) &&
@@ -543,14 +520,12 @@ window.addEventListener('click', (e) => {
         emojiPicker.classList.add('hidden');
     }
 
-    // Close view options menu when clicking outside
     if (!viewOptionsMenu.contains(e.target) && !viewOptionsBtn.contains(e.target) && !viewOptionsMenu.classList.contains('hidden')) {
         viewOptionsMenu.classList.add('opacity-0');
         setTimeout(() => viewOptionsMenu.classList.add('hidden'), 200);
     }
 });
 
-// Close modal when clicking on overlay (not modal content)
 modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) {
         closeModal();
@@ -559,7 +534,6 @@ modalOverlay.addEventListener('click', (e) => {
 
 menuEdit.onclick = () => {
     const event = state.events.find(e => (e.id || e.tempId) == state.contextEventId);
-    // Hide context menu immediately (no animation) before opening modal
     contextMenu.classList.add('hidden', 'opacity-0');
     if (event) openModal(event);
 };
@@ -597,7 +571,6 @@ menuStar.onclick = async () => {
 menuNotes.onclick = () => {
     const event = state.events.find(e => (e.id || e.tempId) == state.contextEventId);
     if (event) {
-        // Ensure other modals are hidden
         newEventModal.classList.add('hidden');
         manageCategoriesModal.classList.add('hidden');
         moreInfoModal.classList.add('hidden');
@@ -657,17 +630,15 @@ function initEmojiPicker() {
 }
 
 function positionEmojiPicker(x, y) {
-    const pickerWidth = 288; // w-72 = 18rem = 288px
-    const pickerHeight = 280; // approximate height
+    const pickerWidth = 288;
+    const pickerHeight = 280;
     const padding = 16;
     const isMobile = window.innerWidth < 480;
 
     let posX, posY;
 
     if (isMobile) {
-        // Center horizontally on mobile
         posX = Math.max(padding, (window.innerWidth - pickerWidth) / 2);
-        // Position in upper portion of screen for thumb accessibility
         posY = Math.max(padding, Math.min(y, window.innerHeight - pickerHeight - padding));
     } else {
         posX = Math.max(padding, Math.min(x, window.innerWidth - pickerWidth - padding));
@@ -741,19 +712,16 @@ toggleScreenshotCheckbox.onchange = (e) => {
     updateScreenshotToggleUI();
     applyScreenshotMode();
     renderEvents();
-    // Close view options menu after enabling screenshot mode
     if (state.screenshotMode) {
         viewOptionsMenu.classList.add('hidden', 'opacity-0');
     }
 };
 
-// Screenshot toggle button in header
 const screenshotToggleBtn = document.getElementById('screenshotToggleBtn');
 const screenshotIcon = document.getElementById('screenshotIcon');
 
 function updateScreenshotToggleUI() {
     if (screenshotIcon) {
-        screenshotIcon.innerText = state.screenshotMode ? '📷' : '📷';
         screenshotIcon.style.opacity = state.screenshotMode ? '1' : '0.5';
     }
     if (toggleScreenshotCheckbox) {
@@ -791,7 +759,6 @@ function updateThemeUI(isDark) {
 
 if (themeToggleBtn) {
     themeToggleBtn.onclick = () => {
-        console.log("--- THEME TOGGLE CLICKED ---");
         const isDark = !document.documentElement.classList.contains('dark');
         updateThemeUI(isDark);
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -816,17 +783,13 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Add More Info Button Logic
 if (addMoreInfoBtn) {
     addMoreInfoBtn.onclick = () => {
-        console.log('Add More Info clicked');
         newEventModal.classList.add('hidden');
         moreInfoModal.classList.remove('hidden');
         void moreInfoModal.offsetWidth;
         moreInfoModal.classList.remove('scale-95', 'opacity-0');
     };
-} else {
-    console.error('addMoreInfoBtn not found');
 }
 
 if (closeMoreInfoBtn) {
@@ -841,26 +804,20 @@ if (closeMoreInfoBtn) {
     };
 }
 
-// Manage Categories Button Logic + Birthday auto-repeat
 if (modalCategoryTabs) {
     modalCategoryTabs.addEventListener('click', (e) => {
         if (e.target.closest('#modalManageCategoriesBtn')) {
-            console.log('Manage Categories clicked');
             newEventModal.classList.add('hidden');
             openManageCategories();
         }
 
-        // Check if a category tab was clicked and if it's a birthday category
         const tab = e.target.closest('.modal-category-tab');
         if (tab) {
             const categoryId = tab.dataset.categoryId;
             const category = state.categories.find(c => c.id == categoryId);
-            // Auto-set repeat to yearly for birthday categories
             if (category && category.name.toLowerCase().includes('birthday')) {
                 if (eventRepeatInput) eventRepeatInput.value = 'yearly';
             }
         }
     });
-} else {
-    console.error('modalCategoryTabs not found');
 }

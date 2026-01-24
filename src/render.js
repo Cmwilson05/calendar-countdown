@@ -3,7 +3,6 @@ import { getEffectiveDate, calculateDays } from './utils.js';
 
 // Format countdown based on event's display_units setting
 function formatCountdown(days, displayUnits) {
-    console.log('formatCountdown received displayUnits:', displayUnits);
     const units = displayUnits || { year: false, month: false, week: false, day: true };
     const absDays = Math.abs(days);
 
@@ -19,29 +18,24 @@ function formatCountdown(days, displayUnits) {
 
     if (units.year) {
         const years = Math.floor(remaining / 365);
-        parts.push(`${years}y`);
+        if (years > 0) parts.push(`${years}y`);
         remaining -= years * 365;
     }
 
     if (units.month) {
         const months = Math.floor(remaining / 30);
-        parts.push(`${months}mo`);
+        if (months > 0) parts.push(`${months}mo`);
         remaining -= months * 30;
     }
 
     if (units.week) {
         const weeks = Math.floor(remaining / 7);
-        parts.push(`${weeks}w`);
+        if (weeks > 0) parts.push(`${weeks}w`);
         remaining -= weeks * 7;
     }
 
-    if (units.day) {
+    if (units.day || parts.length === 0) {
         parts.push(`${remaining}d`);
-    }
-
-    // Fallback if somehow no units selected
-    if (parts.length === 0) {
-        parts.push(`${absDays}d`);
     }
 
     const shortText = parts.join(' ');
@@ -61,7 +55,6 @@ const categoryFilterBar = document.getElementById('categoryFilterBar');
 const viewTitle = document.getElementById('viewTitle');
 const modalCategoryTabs = document.getElementById('modalCategoryTabs');
 const categoriesListEl = document.getElementById('categoriesList');
-const currentEmojiDisplay = document.getElementById('currentEmoji');
 
 export function renderEvents() {
     let filtered = [...state.events];
@@ -166,7 +159,6 @@ export function renderEvents() {
     }
 }
 
-// Format interval - skips zero values for cleaner display
 function formatInterval(days) {
     const parts = [];
     let remaining = days;
@@ -203,7 +195,6 @@ function renderTimelineWithIntervals(events) {
     for (let i = 0; i < events.length; i++) {
         result.push(renderTimelineItem(events[i]));
 
-        // Add interval between this event and the next
         if (state.showIntervals && i < events.length - 1) {
             const currentDate = getEffectiveDate(events[i]);
             const nextDate = getEffectiveDate(events[i + 1]);

@@ -33,7 +33,6 @@ export function initSupabase() {
         const lib = window.supabase;
         if (lib && !supabaseClient) {
             supabaseClient = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log("✅ Supabase initialized");
             return true;
         }
     } catch (e) {
@@ -74,41 +73,31 @@ export function loadFallbackData() {
     const savedEvents = localStorage.getItem('countdown_events');
     const savedCats = localStorage.getItem('countdown_categories');
     
-    // Using console.error to ensure visibility in all console filters
-    console.error("--- DEBUG DATA LOAD ---");
-    console.error("Raw Events in LocalStorage:", savedEvents);
-    console.error("Raw Categories in LocalStorage:", savedCats);
-
     if (savedEvents && savedEvents !== "[]" && savedEvents !== "null") {
         try {
             state.events = JSON.parse(savedEvents);
-            console.error("✅ Successfully parsed events");
         } catch (e) {
-            console.error("❌ Failed to parse events:", e);
+            console.error("Failed to parse events:", e);
         }
     } else {
-        console.error("⚠️ No events found in storage, using defaults");
         state.events = [
-            { title: 'Trip', date: '2026-08-23', color: 'bg-green-500', icon: '✈️', category_id: null, starred: true },
-            { title: 'Mom\'s Birthday', date: '2026-04-17', color: 'bg-pink-500', icon: '🎂', category_id: 1, starred: false },
-            { title: 'Exam 1', date: '2026-02-23', color: 'bg-blue-500', icon: '✏️', category_id: null, starred: true }
+            { title: 'Trip', date: '2026-08-23', icon: '✈️', category_id: null, starred: true },
+            { title: 'Mom\'s Birthday', date: '2026-04-17', icon: '🎂', category_id: 1, starred: false },
+            { title: 'Exam 1', date: '2026-02-23', icon: '✏️', category_id: null, starred: true }
         ];
     }
 
     if (savedCats && savedCats !== "[]" && savedCats !== "null") {
         try {
             state.categories = JSON.parse(savedCats);
-            console.error("✅ Successfully parsed categories");
         } catch (e) {
-            console.error("❌ Failed to parse categories:", e);
+            console.error("Failed to parse categories:", e);
         }
     } else {
-        console.error("⚠️ No categories found in storage, using defaults");
         state.categories = [
-            { id: 1, name: 'Birthday', emoji: '🎂', color_default: 'bg-pink-500' }
+            { id: 1, name: 'Birthday', emoji: '🎂' }
         ];
     }
     
     state.isInitialized = true;
-    console.error("--- END DEBUG ---");
 }
