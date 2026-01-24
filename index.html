@@ -11,6 +11,11 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
             background-color: #ffffff;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark body {
+            background-color: #000000;
+            color: #ffffff;
         }
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
@@ -30,27 +35,27 @@
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-8 bg-white dark:bg-black text-black dark:text-white">
     <!-- Auth Screen -->
-    <div id="authScreen" class="fixed inset-0 bg-white z-[100] flex items-center justify-center p-4">
+    <div id="authScreen" class="fixed inset-0 bg-white dark:bg-black z-[100] flex items-center justify-center p-4">
         <div class="w-full max-w-md space-y-8">
             <div class="text-center">
-                <h2 class="text-4xl font-bold text-gray-900">Welcome</h2>
-                <p class="mt-2 text-gray-600">Sign in to your account</p>
+                <h2 class="text-4xl font-bold text-gray-900 dark:text-white">Welcome</h2>
+                <p class="mt-2 text-gray-600 dark:text-gray-400">Sign in to your account</p>
             </div>
             <form id="authForm" class="mt-8 space-y-6">
                 <div class="space-y-4">
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
-                        <input id="email" name="email" type="email" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-black focus:border-black">
+                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email address</label>
+                        <input id="email" name="email" type="email" required class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-[#1c1c1e] text-black dark:text-white">
                     </div>
                     <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                        <input id="password" name="password" type="password" required class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:ring-black focus:border-black">
+                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                        <input id="password" name="password" type="password" required class="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-[#1c1c1e] text-black dark:text-white">
                     </div>
                 </div>
                 <div>
-                    <button type="submit" id="authSubmit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors">
+                    <button type="submit" id="authSubmit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-black dark:bg-blue-600 hover:bg-gray-800 dark:hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors">
                         Sign In
                     </button>
                 </div>
@@ -64,23 +69,36 @@
         <header class="relative flex justify-between items-center mb-4">
             <h1 id="viewTitle" class="text-4xl font-bold">All</h1>
 
-            <div id="searchContainer" class="hidden absolute left-0 right-0 top-0 bottom-0 bg-white z-20 flex items-center px-4 gap-3">
+            <div id="searchContainer" class="hidden absolute left-0 right-0 top-0 bottom-0 bg-white dark:bg-black z-20 flex items-center px-4 gap-3">
                 <span class="text-xl">🔍</span>
-                <input type="text" id="mainSearchInput" placeholder="Search events..." class="flex-1 text-xl font-semibold outline-none placeholder-gray-300">
-                <button id="closeSearchBtn" class="bg-gray-100 rounded-full p-2 text-gray-500 font-bold hover:bg-gray-200 transition-colors">✕</button>
+                <input type="text" id="mainSearchInput" placeholder="Search events..." class="flex-1 text-xl font-semibold outline-none placeholder-gray-300 bg-transparent text-black dark:text-white">
+                <button id="closeSearchBtn" class="bg-gray-100 dark:bg-gray-800 rounded-full p-2 text-gray-500 dark:text-gray-400 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">✕</button>
             </div>
 
             <div class="flex items-center gap-4">
                 <span id="currentDate" class="uppercase text-sm font-semibold tracking-wider text-gray-400"></span>
-                <button id="logoutBtn" class="text-sm font-semibold text-gray-400 hover:text-black">Logout</button>
+                <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-2xl">
+                    <span id="themeIcon">🌙</span>
+                </button>
+                <button id="logoutBtn" class="text-sm font-semibold text-gray-400 hover:text-black dark:hover:text-white">Logout</button>
             </div>
         </header>
 
+        <!-- Skeleton Loader -->
+        <div id="loader" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="bg-gray-100 dark:bg-gray-900 animate-pulse aspect-square rounded-3xl"></div>
+            <div class="bg-gray-100 dark:bg-gray-900 animate-pulse aspect-square rounded-3xl"></div>
+            <div class="bg-gray-100 dark:bg-gray-900 animate-pulse aspect-square rounded-3xl"></div>
+            <div class="bg-gray-100 dark:bg-gray-900 animate-pulse aspect-square rounded-3xl hidden md:block"></div>
+            <div class="bg-gray-100 dark:bg-gray-900 animate-pulse aspect-square rounded-3xl hidden md:block"></div>
+            <div class="bg-gray-100 dark:bg-gray-900 animate-pulse aspect-square rounded-3xl hidden md:block"></div>
+        </div>
+
         <!-- Category Filter Bar -->
-        <div id="categoryFilterBar" class="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar custom-scrollbar">
-            <button class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold bg-black text-white whitespace-nowrap" data-category-id="all">All</button>
+        <div id="categoryFilterBar" class="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar custom-scrollbar hidden">
+            <button class="filter-tab px-4 py-1.5 rounded-full text-sm font-semibold bg-black dark:bg-white text-white dark:text-black whitespace-nowrap" data-category-id="all">All</button>
             <!-- Dynamic categories will be injected here -->
-            <button id="manageCategoriesBtn" class="px-3 py-1.5 rounded-full text-sm font-semibold bg-gray-100 text-gray-600 whitespace-nowrap flex items-center gap-1">
+            <button id="manageCategoriesBtn" class="px-3 py-1.5 rounded-full text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 whitespace-nowrap flex items-center gap-1">
                 <span>+</span> Edit
             </button>
         </div>
@@ -330,12 +348,12 @@
         </div>
 
         <!-- Sticky Bottom Navigation -->
-        <div class="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white/80 backdrop-blur-md px-6 py-3 rounded-full shadow-2xl border border-gray-100">
+        <div class="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white/80 dark:bg-black/80 backdrop-blur-md px-6 py-3 rounded-full shadow-2xl border border-gray-100 dark:border-gray-800">
             <button id="addEvent" class="flex items-center gap-2 font-bold text-lg">
-                <span class="bg-black text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">+</span>
+                <span class="bg-black dark:bg-white text-white dark:text-black w-6 h-6 rounded-full flex items-center justify-center text-sm">+</span>
                 New Event
             </button>
-            <div class="w-px h-6 bg-gray-200 mx-2"></div>
+            <div class="w-px h-6 bg-gray-200 dark:bg-gray-800 mx-2"></div>
             <button id="searchEvents" class="text-gray-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewbox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

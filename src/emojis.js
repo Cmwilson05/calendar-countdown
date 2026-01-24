@@ -1,5 +1,5 @@
 // Expanded Emoji Library
-const COMMON_EMOJIS = [
+export const COMMON_EMOJIS = [
     { char: '🎉', keywords: 'party, celebrate, event, general, confetti', category: 'Celebration' },
     { char: '🎂', keywords: 'birthday, cake, celebrate, age', category: 'Celebration' },
     { char: '💍', keywords: 'anniversary, wedding, ring, love, marriage, proposal, engagement', category: 'Celebration' },
