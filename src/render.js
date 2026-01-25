@@ -6,7 +6,10 @@ function formatCountdown(days, displayUnits) {
     const units = displayUnits || { year: false, month: false, week: false, day: true };
     const absDays = Math.abs(days);
 
-    if (days === 0) return { short: 'Today', long: 'Today' };
+    // Human-friendly labels for immediate dates
+    if (days === 0) return { short: 'Today', long: 'Today', prefix: '' };
+    if (days === 1) return { short: 'Tomorrow', long: 'Tomorrow', prefix: '' };
+    if (days === -1) return { short: 'Yesterday', long: 'Yesterday', prefix: '' };
 
     // If no units selected, default to days
     if (!units.year && !units.month && !units.week && !units.day) {

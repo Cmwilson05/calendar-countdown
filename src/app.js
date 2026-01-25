@@ -362,6 +362,11 @@ function openModal(data = null) {
         const tab = modalCategoryTabs.querySelector('[data-category-id="none"]');
         if (tab) tab.classList.add('bg-blue-600', 'text-white');
     }
+
+    // Auto-focus title input on desktop (avoid triggering mobile keyboard)
+    if (window.innerWidth >= 768) {
+        setTimeout(() => eventTitleInput.focus(), 100);
+    }
 }
 
 function closeModal() {
@@ -403,7 +408,10 @@ if (closeViewOptionsBtn) {
 // Search
 searchEventsBtn.addEventListener('click', () => {
     searchContainer.classList.remove('hidden');
-    mainSearchInput.focus();
+    // Auto-focus on desktop only (avoid triggering mobile keyboard unexpectedly)
+    if (window.innerWidth >= 768) {
+        mainSearchInput.focus();
+    }
 });
 
 closeSearchBtn.addEventListener('click', () => {
@@ -811,12 +819,35 @@ if (savedTheme) {
 }
 
 document.addEventListener('keydown', (e) => {
+    const isMod = e.metaKey || e.ctrlKey;
+
+    // Escape: Close all modals, menus, and search
     if (e.key === 'Escape') {
         emojiPicker.classList.add('hidden');
         viewOptionsMenu.classList.add('hidden');
         closeContextMenu();
         closeModal();
         searchContainer.classList.add('hidden');
+        mainSearchInput.value = '';
+        state.searchQuery = '';
+        renderEvents();
+        return;
+    }
+
+    // Cmd/Ctrl+K: Open search
+    if (isMod && e.key === 'k') {
+        e.preventDefault();
+        searchContainer.classList.remove('hidden');
+        mainSearchInput.focus();
+        return;
+    }
+
+    // Cmd/Ctrl+B: Toggle Grid/Timeline view
+    if (isMod && e.key === 'b') {
+        e.preventDefault();
+        state.currentView = state.currentView === 'grid' ? 'timeline' : 'grid';
+        updateViewToggleUI();
+        return;
     }
 });
 
