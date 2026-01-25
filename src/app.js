@@ -32,6 +32,7 @@ const unitYearInput = document.getElementById('unitYear');
 const unitMonthInput = document.getElementById('unitMonth');
 const unitWeekInput = document.getElementById('unitWeek');
 const unitDayInput = document.getElementById('unitDay');
+const eventColorInput = document.getElementById('eventColor');
 const modalCategoryTabs = document.getElementById('modalCategoryTabs');
 const emojiPicker = document.getElementById('emojiPicker');
 const selectedIconDisplay = document.getElementById('selectedIconDisplay');
@@ -189,6 +190,15 @@ eventTitleInput.addEventListener('blur', () => {
     eventTitleInput.value = toTitleCase(eventTitleInput.value.trim());
 });
 
+// Color swatch selection
+document.querySelectorAll('.color-swatch').forEach(swatch => {
+    swatch.addEventListener('click', () => {
+        document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('ring-blue-600', 'ring-offset-white', 'dark:ring-offset-[#1c1c1e]'));
+        swatch.classList.add('ring-blue-600', 'ring-offset-white', 'dark:ring-offset-[#1c1c1e]');
+        if (eventColorInput) eventColorInput.value = swatch.dataset.color;
+    });
+});
+
 saveEventBtn.addEventListener('click', async () => {
     const title = eventTitleInput.value.trim();
     const date = eventDateInput.value;
@@ -222,6 +232,7 @@ saveEventBtn.addEventListener('click', async () => {
         multi_day: eventMultiDayInput?.checked || false,
         repeat: eventRepeatInput?.value || 'never',
         display_units: displayUnits,
+        color: eventColorInput?.value || '#2563eb',
         user_id: userId
     };
 
@@ -309,7 +320,17 @@ function openModal(data = null) {
         if (unitMonthInput) unitMonthInput.checked = units.month;
         if (unitWeekInput) unitWeekInput.checked = units.week;
         if (unitDayInput) unitDayInput.checked = units.day;
-        
+
+        // Set color
+        const eventColor = data.color || '#2563eb';
+        if (eventColorInput) eventColorInput.value = eventColor;
+        document.querySelectorAll('.color-swatch').forEach(s => {
+            s.classList.remove('ring-blue-600', 'ring-offset-white', 'dark:ring-offset-[#1c1c1e]');
+            if (s.dataset.color === eventColor) {
+                s.classList.add('ring-blue-600', 'ring-offset-white', 'dark:ring-offset-[#1c1c1e]');
+            }
+        });
+
         state.selectedIcon = data.icon || '🎉';
         currentEmojiDisplay.innerText = state.selectedIcon;
         const tab = modalCategoryTabs.querySelector(`[data-category-id="${data.category_id || 'none'}"]`);
@@ -321,12 +342,21 @@ function openModal(data = null) {
         if (eventStarredInput) eventStarredInput.checked = false;
         if (eventMultiDayInput) eventMultiDayInput.checked = false;
         if (eventRepeatInput) eventRepeatInput.value = 'never';
-        
+
         if (unitYearInput) unitYearInput.checked = false;
         if (unitMonthInput) unitMonthInput.checked = false;
         if (unitWeekInput) unitWeekInput.checked = false;
         if (unitDayInput) unitDayInput.checked = true;
-        
+
+        // Reset color to default blue
+        if (eventColorInput) eventColorInput.value = '#2563eb';
+        document.querySelectorAll('.color-swatch').forEach(s => {
+            s.classList.remove('ring-blue-600', 'ring-offset-white', 'dark:ring-offset-[#1c1c1e]');
+            if (s.dataset.color === '#2563eb') {
+                s.classList.add('ring-blue-600', 'ring-offset-white', 'dark:ring-offset-[#1c1c1e]');
+            }
+        });
+
         state.selectedIcon = '🎉';
         currentEmojiDisplay.innerText = '🎉';
         const tab = modalCategoryTabs.querySelector('[data-category-id="none"]');

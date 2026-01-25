@@ -95,9 +95,11 @@ export function renderEvents() {
         const cat = state.categories.find(c => c.id == event.category_id);
         const displayIcon = event.icon || (cat ? cat.emoji : '📅');
         const countdown = formatCountdown(days, event.display_units);
+        const cardColor = event.color || '#2563eb';
 
         return `
-            <div class="bg-blue-600 text-white p-6 rounded-3xl shadow-lg aspect-square flex flex-col justify-between cursor-pointer active:scale-95 transition-transform relative"
+            <div class="text-white p-6 rounded-3xl shadow-lg aspect-square flex flex-col justify-between cursor-pointer active:scale-95 transition-transform relative"
+                 style="background-color: ${cardColor}"
                  onclick="handleEventClick('${event.id || event.tempId}')">
                 ${event.starred ? `<div class="absolute top-3 left-3 text-yellow-300 text-lg">⭐</div>` : ''}
                 <div class="flex justify-between items-start">
@@ -220,25 +222,28 @@ function renderTimelineItem(event) {
     const cat = state.categories.find(c => c.id == event.category_id);
     const displayIcon = event.icon || (cat ? cat.emoji : '📅');
     const countdown = formatCountdown(days, event.display_units);
+    const eventColor = event.color || '#2563eb';
 
     return `
-        <div class="flex items-start gap-6 relative group cursor-pointer" onclick="handleEventClick('${event.id || event.tempId}')">
-            <div class="w-16 text-right pt-1 flex-shrink-0">
+        <div class="flex items-start gap-4 relative group cursor-pointer" onclick="handleEventClick('${event.id || event.tempId}')">
+            <div class="w-16 text-right pt-3 flex-shrink-0">
                 <div class="text-gray-400 dark:text-gray-500 font-bold text-xl leading-none mb-1">${effectiveDate.toLocaleDateString('en-US', {month:'short', day:'numeric'})}</div>
                 <div class="text-gray-300 dark:text-gray-600 text-sm font-semibold">${effectiveDate.getFullYear()}</div>
             </div>
-            ${state.showIcons ? `
-            <div class="relative z-10 flex items-center justify-center w-12 h-12 bg-gray-50 dark:bg-gray-900 rounded-full border border-gray-100 dark:border-gray-800 shadow-sm flex-shrink-0">
-                <span class="text-2xl">${displayIcon}</span>
-            </div>` : ''}
-            <div class="flex-1 pt-1">
-                <div class="flex items-center gap-2">
-                    <div class="font-bold text-2xl text-black dark:text-white leading-tight">${event.title}</div>
-                    ${event.starred ? `<span class="text-yellow-500 text-lg">⭐</span>` : ''}
-                </div>
-                <div class="flex items-baseline gap-2">
-                    ${state.showDays ? `<div class="text-gray-500 dark:text-gray-400 font-semibold text-xl">${countdown.long}</div>` : ''}
-                    ${state.showNotes && event.notes ? `<div class="text-sm text-gray-400 italic">${event.notes}</div>` : ''}
+            <div class="flex-1 flex items-center gap-4 rounded-2xl px-4 py-3 -ml-2" style="background-color: ${eventColor}15; border: 2px solid ${eventColor}30">
+                ${state.showIcons ? `
+                <div class="relative z-10 flex items-center justify-center w-12 h-12 bg-white dark:bg-gray-900 rounded-full shadow-sm flex-shrink-0 ring-2" style="--tw-ring-color: ${eventColor}">
+                    <span class="text-2xl">${displayIcon}</span>
+                </div>` : ''}
+                <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                        <div class="font-bold text-2xl text-black dark:text-white leading-tight">${event.title}</div>
+                        ${event.starred ? `<span class="text-yellow-500 text-lg">⭐</span>` : ''}
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        ${state.showDays ? `<div class="font-semibold text-xl" style="color: ${eventColor}">${countdown.long}</div>` : ''}
+                        ${state.showNotes && event.notes ? `<div class="text-sm text-gray-400 italic">${event.notes}</div>` : ''}
+                    </div>
                 </div>
             </div>
         </div>
