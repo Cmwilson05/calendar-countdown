@@ -33,6 +33,7 @@ export const state = {
     showIcons: localStorage.getItem('showIcons') === null ? true : localStorage.getItem('showIcons') === 'true',
     showIntervals: localStorage.getItem('showIntervals') === 'true',
     groupByCategory: localStorage.getItem('groupByCategory') === 'true',
+    hidePastEvents: localStorage.getItem('hidePastEvents') === 'true',
     screenshotMode: false,
     searchQuery: '',
     menuTimeout: null,
@@ -79,6 +80,7 @@ export async function saveData() {
     localStorage.setItem('showIcons', state.showIcons);
     localStorage.setItem('showIntervals', state.showIntervals);
     localStorage.setItem('groupByCategory', state.groupByCategory);
+    localStorage.setItem('hidePastEvents', state.hidePastEvents);
 }
 
 export function loadFallbackData() {
