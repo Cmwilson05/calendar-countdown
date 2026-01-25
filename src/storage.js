@@ -113,3 +113,135 @@ export function loadFallbackData() {
     
     state.isInitialized = true;
 }
+
+// Export data as JSON file download
+export function exportData() {
+    const data = {
+        events: state.events,
+        categories: state.categories,
+        exportedAt: new Date().toISOString(),
+        version: '1.0'
+    };
+
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `countdown_backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Import data from JSON file
+export async function importData(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+
+                // Validate structure
+                if (!data.events || !Array.isArray(data.events)) {
+                    throw new Error('Invalid backup file: missing events array');
+                }
+                if (!data.categories || !Array.isArray(data.categories)) {
+                    throw new Error('Invalid backup file: missing categories array');
+                }
+
+                // Confirm replace
+                const confirmed = confirm(
+                    `This will replace your current data with:\n` +
+                    `• ${data.events.length} events\n` +
+                    `• ${data.categories.length} categories\n\n` +
+                    `Continue?`
+                );
+
+                if (!confirmed) {
+                    resolve(false);
+                    return;
+                }
+
+                // Replace state
+                state.events = data.events;
+                state.categories = data.categories;
+
+                // Save to localStorage
+                localStorage.setItem('countdown_events', JSON.stringify(state.events));
+                localStorage.setItem('countdown_categories', JSON.stringify(state.categories));
+
+                // Sync to Supabase if logged in
+                if (supabaseClient) {
+                    try {
+                        const { data: { session } } = await supabaseClient.auth.getSession();
+                        if (session) {
+                            // Delete existing data
+                            await supabaseClient.from('countdown_events').delete().eq('user_id', session.user.id);
+                            await supabaseClient.from('categories').delete().eq('user_id', session.user.id);
+
+                            // Insert categories first and build ID mapping
+                            const categoryIdMap = {};
+                            if (state.categories.length > 0) {
+                                const catsWithUser = state.categories.map(cat => ({
+                                    name: cat.name,
+                                    emoji: cat.emoji,
+                                    user_id: session.user.id
+                                }));
+                                const { data: newCats } = await supabaseClient.from('categories').insert(catsWithUser).select();
+
+                                if (newCats) {
+                                    // Map old IDs to new IDs (by index since order is preserved)
+                                    state.categories.forEach((oldCat, i) => {
+                                        if (newCats[i]) {
+                                            categoryIdMap[oldCat.id] = newCats[i].id;
+                                        }
+                                    });
+                                    state.categories = newCats;
+                                }
+                            }
+
+                            // Insert events with updated category_id references
+                            if (state.events.length > 0) {
+                                const eventsWithUser = state.events.map(ev => ({
+                                    title: ev.title,
+                                    date: ev.date,
+                                    icon: ev.icon,
+                                    category_id: ev.category_id ? categoryIdMap[ev.category_id] || null : null,
+                                    notes: ev.notes,
+                                    starred: ev.starred,
+                                    multi_day: ev.multi_day,
+                                    repeat: ev.repeat,
+                                    display_units: ev.display_units,
+                                    color: ev.color,
+                                    user_id: session.user.id
+                                }));
+                                const { data: newEvents } = await supabaseClient.from('countdown_events').insert(eventsWithUser).select();
+
+                                if (newEvents) {
+                                    state.events = newEvents;
+                                }
+                            }
+
+                            // Update localStorage with new IDs
+                            localStorage.setItem('countdown_events', JSON.stringify(state.events));
+                            localStorage.setItem('countdown_categories', JSON.stringify(state.categories));
+                        }
+                    } catch (err) {
+                        console.error('Failed to sync imported data to Supabase:', err);
+                    }
+                }
+
+                resolve(true);
+            } catch (err) {
+                reject(err);
+            }
+        };
+
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsText(file);
+    });
+}

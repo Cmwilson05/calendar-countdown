@@ -506,6 +506,19 @@
                             <button id="saveNewCategory" class="bg-blue-600 text-white px-4 rounded-lg font-bold min-h-[44px]">Add</button>
                         </div>
                     </div>
+
+                    <div class="bg-gray-100 dark:bg-[#2c2c2e] p-4 rounded-2xl mt-4">
+                        <h3 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Backup & Restore</h3>
+                        <div class="flex gap-2">
+                            <button id="exportDataBtn" class="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-[#1c1c1e] text-black dark:text-white px-4 py-3 rounded-lg font-medium border border-gray-200 dark:border-transparent min-h-[44px] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                <span>⬇️</span> Export
+                            </button>
+                            <button id="importDataBtn" class="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-[#1c1c1e] text-black dark:text-white px-4 py-3 rounded-lg font-medium border border-gray-200 dark:border-transparent min-h-[44px] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                <span>⬆️</span> Import
+                            </button>
+                            <input type="file" id="importFileInput" accept=".json" class="hidden">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

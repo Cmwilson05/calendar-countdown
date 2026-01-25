@@ -1,4 +1,4 @@
-import { supabaseClient, state, saveData, loadFallbackData, initSupabase } from './storage.js';
+import { supabaseClient, state, saveData, loadFallbackData, initSupabase, exportData, importData } from './storage.js';
 import { checkUser, setupAuthListener, signIn, signOut } from './auth.js';
 import { renderEvents, renderCategoryFilterBar, renderModalCategoryTabs, renderCategoriesList } from './render.js';
 import { COMMON_EMOJIS } from './emojis.js';
@@ -42,6 +42,9 @@ const emojiList = document.getElementById('emojiList');
 const newCategoryEmojiBtn = document.getElementById('newCategoryEmoji');
 const newCategoryNameInput = document.getElementById('newCategoryName');
 const saveNewCategoryBtn = document.getElementById('saveNewCategory');
+const exportDataBtn = document.getElementById('exportDataBtn');
+const importDataBtn = document.getElementById('importDataBtn');
+const importFileInput = document.getElementById('importFileInput');
 const contextMenu = document.getElementById('contextMenu');
 const menuEdit = document.getElementById('menuEdit');
 const menuDelete = document.getElementById('menuDelete');
@@ -505,6 +508,41 @@ saveNewCategoryBtn.onclick = async () => {
     renderCategoryFilterBar();
     await saveData();
 };
+
+// Data Export/Import
+if (exportDataBtn) {
+    exportDataBtn.onclick = () => {
+        exportData();
+    };
+}
+
+if (importDataBtn) {
+    importDataBtn.onclick = () => {
+        importFileInput.click();
+    };
+}
+
+if (importFileInput) {
+    importFileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            const success = await importData(file);
+            if (success) {
+                renderEvents();
+                renderCategoryFilterBar();
+                renderCategoriesList();
+                alert('Data imported successfully!');
+            }
+        } catch (err) {
+            alert('Import failed: ' + err.message);
+        }
+
+        // Reset file input
+        importFileInput.value = '';
+    };
+}
 
 // Context Menu
 window.handleEventClick = function(eventId) {
