@@ -599,6 +599,35 @@ menuDelete.onclick = async () => {
     closeContextMenu();
 };
 
+menuDuplicate.onclick = async () => {
+    const event = state.events.find(e => (e.id || e.tempId) == state.contextEventId);
+    if (event) {
+        const tempId = 'temp_' + Math.random().toString(36).substr(2, 9);
+        const duplicatedEvent = {
+            ...event,
+            id: undefined,
+            tempId,
+            title: event.title + ' (copy)'
+        };
+        state.events.push(duplicatedEvent);
+
+        if (supabaseClient) {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                const { id, tempId: _, ...eventData } = duplicatedEvent;
+                const { data, error } = await supabaseClient.from('countdown_events').insert([eventData]).select();
+                if (data && data.length > 0) {
+                    const idx = state.events.findIndex(e => e.tempId === tempId);
+                    if (idx !== -1) state.events[idx] = data[0];
+                }
+            }
+        }
+        renderEvents();
+        await saveData();
+    }
+    closeContextMenu();
+};
+
 menuStar.onclick = async () => {
     const index = state.events.findIndex(e => (e.id || e.tempId) == state.contextEventId);
     if (index !== -1) {
