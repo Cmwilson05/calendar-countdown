@@ -1,6 +1,18 @@
 // Supabase configuration
-const SUPABASE_URL = 'https://qikfgxpbqjzmkjjcxgfr.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpa2ZneHBicWp6bWtqamN4Z2ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NDYzMjUsImV4cCI6MjA4NDQyMjMyNX0.DkvmYMIEfF1GEIyd7s7v1VL0o7Y2h7OIv4ShhgVrQ60';
+// Prefer environment variables, fallback to hardcoded values for development
+const FALLBACK_SUPABASE_URL = 'https://qikfgxpbqjzmkjjcxgfr.supabase.co';
+const FALLBACK_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpa2ZneHBicWp6bWtqamN4Z2ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NDYzMjUsImV4cCI6MjA4NDQyMjMyNX0.DkvmYMIEfF1GEIyd7s7v1VL0o7Y2h7OIv4ShhgVrQ60';
+
+const SUPABASE_URL = import.meta.env?.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env?.VITE_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY;
+
+// Warn if using fallback values
+if (!import.meta.env?.VITE_SUPABASE_URL || !import.meta.env?.VITE_SUPABASE_ANON_KEY) {
+    console.warn(
+        '[Calendar Countdown] Environment variables not found. Using fallback Supabase configuration.\n' +
+        'For production, create a .env file with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+    );
+}
 
 export let supabaseClient = null;
 export const state = {
