@@ -67,17 +67,38 @@ export function renderEvents() {
 
     if (state.searchQuery) {
         const lowerQ = state.searchQuery.toLowerCase();
-        filtered = filtered.filter(e => 
-            e.title.toLowerCase().includes(lowerQ) || 
+        filtered = filtered.filter(e =>
+            e.title.toLowerCase().includes(lowerQ) ||
             (e.notes && e.notes.toLowerCase().includes(lowerQ))
         );
     }
 
+    // Filter out past events if toggle is enabled
+    if (state.hidePastEvents) {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0); // Normalize to start of today
+
+        filtered = filtered.filter(event => {
+            const effectiveDate = getEffectiveDate(event);
+            return effectiveDate >= now; // Keep if today or future
+        });
+    }
+
     if (filtered.length === 0) {
-        const message = state.searchQuery 
-            ? `No matches for "${state.searchQuery}"` 
-            : "No events yet. Tap + to start!";
-        const emptyHtml = `<div class="col-span-full text-center text-gray-400 mt-20">${message}</div>`;
+        let emptyHtml;
+        if (state.searchQuery) {
+            const escapedQuery = state.searchQuery.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            emptyHtml = `
+                <div class="col-span-full text-center mt-20">
+                    <p class="text-gray-400 mb-4">No matches for "${state.searchQuery}"</p>
+                    <button onclick="openModalWithTitle('${escapedQuery}')"
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 active:scale-95 transition-all">
+                        + Create "${state.searchQuery}"
+                    </button>
+                </div>`;
+        } else {
+            emptyHtml = `<div class="col-span-full text-center text-gray-400 mt-20">No events yet. Tap + to start!</div>`;
+        }
         gridView.innerHTML = emptyHtml;
         timelineView.innerHTML = emptyHtml;
         return;
@@ -100,8 +121,19 @@ export function renderEvents() {
         const countdown = formatCountdown(days, event.display_units);
         const cardColor = event.color || '#2563eb';
 
+        // Format date badge: "Oct 24" for current year, "Jan 12, 2026" for other years
+        const currentYear = new Date().getFullYear();
+        const eventYear = effectiveDate.getFullYear();
+        const dateBadge = eventYear === currentYear
+            ? effectiveDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            : effectiveDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+        // Visual distinction for past events
+        const isPast = days < 0;
+        const pastClasses = isPast ? 'opacity-60 grayscale-[0.5]' : '';
+
         return `
-            <div class="text-white p-6 rounded-3xl shadow-lg aspect-square flex flex-col justify-between cursor-pointer active:scale-95 transition-transform relative"
+            <div class="text-white p-6 rounded-3xl shadow-lg aspect-square flex flex-col justify-between cursor-pointer active:scale-95 transition-transform relative ${pastClasses}"
                  style="background-color: ${cardColor}"
                  onclick="handleEventClick('${event.id || event.tempId}')">
                 ${event.starred ? `<div class="absolute top-3 left-3 text-yellow-300 text-lg">⭐</div>` : ''}
@@ -111,10 +143,13 @@ export function renderEvents() {
                 </div>
                 <div class="flex flex-col gap-1">
                     <div class="flex items-baseline gap-2">
-                        ${state.showDays ? `<div class="text-3xl font-bold">${countdown.short}</div>` : ''}
+                        ${state.showDays ? `<div class="font-bold" style="font-size: 2.4rem">${countdown.short}</div>` : ''}
                         ${state.showNotes && event.notes ? `<div class="text-xs opacity-70 line-clamp-2 italic">${event.notes}</div>` : ''}
                     </div>
-                    ${state.showDays ? `<div class="text-sm opacity-80 uppercase tracking-wider">${days === 0 ? 'Today' : countdown.prefix}</div>` : ''}
+                    <div class="flex items-center gap-2">
+                        ${state.showDays ? `<div class="text-sm opacity-80 uppercase tracking-wider">${days === 0 ? 'Today' : countdown.prefix}</div>` : ''}
+                        <div class="text-xs font-medium opacity-60 uppercase tracking-wide">${dateBadge}</div>
+                    </div>
                 </div>
             </div>
         `;
@@ -227,8 +262,13 @@ function renderTimelineItem(event) {
     const countdown = formatCountdown(days, event.display_units);
     const eventColor = event.color || '#2563eb';
 
+    // Visual distinction for past events
+    const isPast = days < 0;
+    const pastClasses = isPast ? 'opacity-60 grayscale-[0.5]' : '';
+    const countdownColor = isPast ? '#6b7280' : eventColor; // Gray for past, event color for upcoming
+
     return `
-        <div class="flex items-start gap-4 relative group cursor-pointer" onclick="handleEventClick('${event.id || event.tempId}')">
+        <div class="flex items-start gap-4 relative group cursor-pointer ${pastClasses}" onclick="handleEventClick('${event.id || event.tempId}')">
             <div class="w-16 text-right pt-3 flex-shrink-0">
                 <div class="text-gray-400 dark:text-gray-500 font-bold text-xl leading-none mb-1">${effectiveDate.toLocaleDateString('en-US', {month:'short', day:'numeric'})}</div>
                 <div class="text-gray-300 dark:text-gray-600 text-sm font-semibold">${effectiveDate.getFullYear()}</div>
@@ -244,7 +284,7 @@ function renderTimelineItem(event) {
                         ${event.starred ? `<span class="text-yellow-500 text-lg">⭐</span>` : ''}
                     </div>
                     <div class="flex items-baseline gap-2">
-                        ${state.showDays ? `<div class="font-semibold text-xl" style="color: ${eventColor}">${countdown.long}</div>` : ''}
+                        ${state.showDays ? `<div class="font-semibold text-xl" style="color: ${countdownColor}">${countdown.long}</div>` : ''}
                         ${state.showNotes && event.notes ? `<div class="text-sm text-gray-400 italic">${event.notes}</div>` : ''}
                     </div>
                 </div>

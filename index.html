@@ -189,6 +189,9 @@
             </div>
 
             <div class="flex items-center gap-1">
+                <button id="viewToggle" class="min-w-[44px] min-h-[44px] rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-xl flex items-center justify-center" title="Toggle View">
+                    <span id="viewIcon">🔲</span>
+                </button>
                 <button id="screenshotToggleBtn" class="min-w-[44px] min-h-[44px] rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-xl flex items-center justify-center" title="Screenshot Mode">
                     <span id="screenshotIcon">📷</span>
                 </button>
@@ -328,6 +331,10 @@
                         <label class="flex items-center justify-between px-3 py-3 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer min-h-[44px]">
                             <span>Show Intervals</span>
                             <input type="checkbox" id="toggleIntervals" class="accent-blue-500 w-5 h-5">
+                        </label>
+                        <label class="flex items-center justify-between px-3 py-3 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer min-h-[44px]">
+                            <span>Hide Past Events</span>
+                            <input type="checkbox" id="toggleHidePast" class="accent-blue-500 w-5 h-5">
                         </label>
                     </div>
                 </div>
@@ -540,9 +547,6 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                 </svg>
-            </button>
-            <button id="viewToggle" class="text-gray-400 hover:text-black dark:hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center">
-                <span id="viewIcon" class="text-2xl">⋮☰</span>
             </button>
         </div>
     </div>

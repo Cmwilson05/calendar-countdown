@@ -68,6 +68,7 @@ const toggleNotesCheckbox = document.getElementById('toggleNotes');
 const toggleDaysCheckbox = document.getElementById('toggleDays');
 const toggleIconsCheckbox = document.getElementById('toggleIcons');
 const toggleIntervalsCheckbox = document.getElementById('toggleIntervals');
+const toggleHidePastCheckbox = document.getElementById('toggleHidePast');
 const toggleScreenshotCheckbox = document.getElementById('toggleScreenshot');
 const toggleGroupingCheckbox = document.getElementById('toggleGrouping');
 const themeToggleBtn = document.getElementById('themeToggle');
@@ -131,6 +132,7 @@ async function init() {
     if (toggleDaysCheckbox) toggleDaysCheckbox.checked = state.showDays;
     if (toggleIconsCheckbox) toggleIconsCheckbox.checked = state.showIcons;
     if (toggleIntervalsCheckbox) toggleIntervalsCheckbox.checked = state.showIntervals;
+    if (toggleHidePastCheckbox) toggleHidePastCheckbox.checked = state.hidePastEvents;
 
     // Initialize sort option from saved state
     document.querySelectorAll('.sort-option').forEach(btn => {
@@ -271,9 +273,9 @@ saveEventBtn.addEventListener('click', async () => {
 
 function updateViewToggleUI() {
     if (state.currentView === 'grid') {
-        gridView.classList.remove('hidden'); timelineView.classList.add('hidden'); viewIcon.innerText = '⊞';
+        gridView.classList.remove('hidden'); timelineView.classList.add('hidden'); viewIcon.innerText = '🔲';
     } else {
-        gridView.classList.add('hidden'); timelineView.classList.remove('hidden'); viewIcon.innerText = '⋮☰';
+        gridView.classList.add('hidden'); timelineView.classList.remove('hidden'); viewIcon.innerText = '📋';
     }
 }
 
@@ -303,14 +305,18 @@ viewToggle.onclick = () => {
 };
 
 function openModal(data = null) {
-    state.editingEventId = data ? (data.id || data.tempId) : null;
+    // Check if data is an existing event (has id or tempId) or just a preset title
+    const isExistingEvent = data && (data.id || data.tempId);
+    const presetTitle = data && !isExistingEvent ? data.title : null;
+
+    state.editingEventId = isExistingEvent ? (data.id || data.tempId) : null;
     modalOverlay.classList.remove('hidden');
     newEventModal.classList.remove('hidden');
     void newEventModal.offsetWidth;
     newEventModal.classList.remove('scale-95', 'opacity-0');
     renderModalCategoryTabs();
-    
-    if (data) {
+
+    if (isExistingEvent) {
         eventTitleInput.value = data.title;
         eventDateInput.value = data.date;
         eventNotesInput.value = data.notes || '';
@@ -339,7 +345,8 @@ function openModal(data = null) {
         const tab = modalCategoryTabs.querySelector(`[data-category-id="${data.category_id || 'none'}"]`);
         if (tab) tab.classList.add('bg-blue-600', 'text-white');
     } else {
-        eventTitleInput.value = '';
+        // New event - may have a preset title from search
+        eventTitleInput.value = presetTitle || '';
         eventDateInput.value = new Date().toISOString().split('T')[0];
         eventNotesInput.value = '';
         if (eventStarredInput) eventStarredInput.checked = false;
@@ -543,6 +550,17 @@ if (importFileInput) {
         importFileInput.value = '';
     };
 }
+
+// Global function to open modal with a preset title (called from search empty state)
+window.openModalWithTitle = function(title) {
+    // Close search UI first
+    searchContainer.classList.add('hidden');
+    mainSearchInput.value = '';
+    state.searchQuery = '';
+
+    // Open modal with preset title
+    openModal({ title });
+};
 
 // Context Menu
 window.handleEventClick = function(eventId) {
@@ -838,6 +856,9 @@ toggleNotesCheckbox.onchange = (e) => { state.showNotes = e.target.checked; rend
 toggleDaysCheckbox.onchange = (e) => { state.showDays = e.target.checked; renderEvents(); saveData(); };
 toggleIconsCheckbox.onchange = (e) => { state.showIcons = e.target.checked; renderEvents(); saveData(); };
 toggleIntervalsCheckbox.onchange = (e) => { state.showIntervals = e.target.checked; renderEvents(); saveData(); };
+if (toggleHidePastCheckbox) {
+    toggleHidePastCheckbox.onchange = (e) => { state.hidePastEvents = e.target.checked; renderEvents(); saveData(); };
+}
 toggleScreenshotCheckbox.onchange = (e) => {
     state.screenshotMode = e.target.checked;
     updateScreenshotToggleUI();
