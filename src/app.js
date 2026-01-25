@@ -613,6 +613,25 @@ menuStar.onclick = async () => {
     closeContextMenu();
 };
 
+// Context menu color swatches
+document.querySelectorAll('.context-color-swatch').forEach(swatch => {
+    swatch.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const newColor = swatch.dataset.color;
+        const index = state.events.findIndex(ev => (ev.id || ev.tempId) == state.contextEventId);
+        if (index !== -1) {
+            state.events[index].color = newColor;
+            if (supabaseClient && state.events[index].id) {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) await supabaseClient.from('countdown_events').update({ color: newColor }).eq('id', state.events[index].id);
+            }
+            renderEvents();
+            await saveData();
+        }
+        closeContextMenu();
+    });
+});
+
 menuNotes.onclick = () => {
     const event = state.events.find(e => (e.id || e.tempId) == state.contextEventId);
     if (event) {
