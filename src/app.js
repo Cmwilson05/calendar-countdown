@@ -2,7 +2,7 @@ import { supabaseClient, state, saveData, loadFallbackData, initSupabase, export
 import { checkUser, setupAuthListener, signIn, signOut } from './auth.js';
 import { renderEvents, renderCategoryFilterBar, renderModalCategoryTabs, renderCategoriesList } from './render.js';
 import { COMMON_EMOJIS } from './emojis.js';
-import { toTitleCase } from './utils.js';
+import { toTitleCase, escapeHtml } from './utils.js';
 
 // Elements
 const gridView = document.getElementById('gridView');
@@ -802,16 +802,16 @@ function renderEmojis(arr) {
     const isSearch = emojiSearch.value.length > 0;
     if (isSearch) {
         emojiList.className = "grid grid-cols-5 gap-1 p-2 max-h-56 overflow-y-auto custom-scrollbar";
-        emojiList.innerHTML = arr.map(em => `<button class="emoji-item w-11 h-11 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 text-2xl transition-colors" data-emoji="${em.char}">${em.char}</button>`).join('');
+        emojiList.innerHTML = arr.map(em => `<button class="emoji-item w-11 h-11 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 text-2xl transition-colors" data-emoji="${escapeHtml(em.char)}">${escapeHtml(em.char)}</button>`).join('');
     } else {
         const groups = {};
         arr.forEach(em => { if (!groups[em.category]) groups[em.category] = []; groups[em.category].push(em); });
         emojiList.className = "flex flex-col p-2 max-h-56 overflow-y-auto custom-scrollbar";
         emojiList.innerHTML = Object.entries(groups).map(([cat, ems]) => `
             <div class="mb-3">
-                <h3 class="text-[10px] uppercase text-gray-400 font-bold mb-1.5 px-1">${cat}</h3>
+                <h3 class="text-[10px] uppercase text-gray-400 font-bold mb-1.5 px-1">${escapeHtml(cat)}</h3>
                 <div class="grid grid-cols-5 gap-1">
-                    ${ems.map(em => `<button class="emoji-item w-11 h-11 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 text-2xl transition-colors" data-emoji="${em.char}">${em.char}</button>`).join('')}
+                    ${ems.map(em => `<button class="emoji-item w-11 h-11 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 text-2xl transition-colors" data-emoji="${escapeHtml(em.char)}">${escapeHtml(em.char)}</button>`).join('')}
                 </div>
             </div>
         `).join('');

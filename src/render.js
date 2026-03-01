@@ -1,5 +1,5 @@
 import { state } from './storage.js';
-import { getEffectiveDate, calculateDays } from './utils.js';
+import { getEffectiveDate, calculateDays, escapeHtml } from './utils.js';
 
 // Format countdown based on event's display_units setting
 function formatCountdown(days, displayUnits) {
@@ -87,13 +87,14 @@ export function renderEvents() {
     if (filtered.length === 0) {
         let emptyHtml;
         if (state.searchQuery) {
-            const escapedQuery = state.searchQuery.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            const safeQuery = escapeHtml(state.searchQuery);
+            const attrQuery = safeQuery.replace(/'/g, '&#39;');
             emptyHtml = `
                 <div class="col-span-full text-center mt-20">
-                    <p class="text-gray-400 mb-4">No matches for "${state.searchQuery}"</p>
-                    <button onclick="openModalWithTitle('${escapedQuery}')"
+                    <p class="text-gray-400 mb-4">No matches for "${safeQuery}"</p>
+                    <button onclick="openModalWithTitle('${attrQuery}')"
                             class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 active:scale-95 transition-all">
-                        + Create "${state.searchQuery}"
+                        + Create "${safeQuery}"
                     </button>
                 </div>`;
         } else {
@@ -117,9 +118,12 @@ export function renderEvents() {
         const effectiveDate = getEffectiveDate(event);
         const days = calculateDays(effectiveDate);
         const cat = state.categories.find(c => c.id == event.category_id);
-        const displayIcon = event.icon || (cat ? cat.emoji : '📅');
+        const displayIcon = escapeHtml(event.icon || (cat ? cat.emoji : '📅'));
         const countdown = formatCountdown(days, event.display_units);
         const cardColor = event.color || '#2563eb';
+        const safeTitle = escapeHtml(event.title);
+        const safeNotes = escapeHtml(event.notes);
+        const safeId = escapeHtml(event.id || event.tempId);
 
         // Format date badge: "Oct 24" for current year, "Jan 12, 2026" for other years
         const currentYear = new Date().getFullYear();
@@ -135,16 +139,16 @@ export function renderEvents() {
         return `
             <div class="text-white p-6 rounded-3xl shadow-lg aspect-square flex flex-col justify-between cursor-pointer active:scale-95 transition-transform relative ${pastClasses}"
                  style="background-color: ${cardColor}"
-                 onclick="handleEventClick('${event.id || event.tempId}')">
+                 onclick="handleEventClick('${safeId}')">
                 ${event.starred ? `<div class="absolute top-3 left-3 text-yellow-300 text-lg">⭐</div>` : ''}
                 <div class="flex justify-between items-start">
-                    <div class="text-xl font-bold line-clamp-2 ${event.starred ? 'ml-6' : ''}">${event.title}</div>
+                    <div class="text-xl font-bold line-clamp-2 ${event.starred ? 'ml-6' : ''}">${safeTitle}</div>
                     ${state.showIcons ? `<div class="text-xl">${displayIcon}</div>` : ''}
                 </div>
                 <div class="flex flex-col gap-1">
                     <div class="flex items-baseline gap-2">
                         ${state.showDays ? `<div class="font-bold" style="font-size: 2.4rem">${countdown.short}</div>` : ''}
-                        ${state.showNotes && event.notes ? `<div class="text-xs opacity-70 line-clamp-2 italic">${event.notes}</div>` : ''}
+                        ${state.showNotes && event.notes ? `<div class="text-xs opacity-70 line-clamp-2 italic">${safeNotes}</div>` : ''}
                     </div>
                     <div class="flex items-center gap-2">
                         ${state.showDays ? `<div class="text-sm opacity-80 uppercase tracking-wider">${days === 0 ? 'Today' : countdown.prefix}</div>` : ''}
@@ -176,7 +180,7 @@ export function renderEvents() {
             const cat = state.categories.find(c => c.id == catId);
             return `
                 <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-green-500 dark:text-green-400 mb-6 px-4">${cat ? cat.name : 'Uncategorized'}</h2>
+                    <h2 class="text-2xl font-bold text-green-500 dark:text-green-400 mb-6 px-4">${cat ? escapeHtml(cat.name) : 'Uncategorized'}</h2>
                     <div class="relative px-4">
                         ${state.showIcons ? `<div class="absolute left-[104px] top-0 bottom-0 border-l-2 border-dotted border-gray-200 dark:border-gray-800"></div>` : ''}
                         <div class="flex flex-col gap-10">
@@ -258,9 +262,12 @@ function renderTimelineItem(event) {
     const effectiveDate = getEffectiveDate(event);
     const days = calculateDays(effectiveDate);
     const cat = state.categories.find(c => c.id == event.category_id);
-    const displayIcon = event.icon || (cat ? cat.emoji : '📅');
+    const displayIcon = escapeHtml(event.icon || (cat ? cat.emoji : '📅'));
     const countdown = formatCountdown(days, event.display_units);
     const eventColor = event.color || '#2563eb';
+    const safeTitle = escapeHtml(event.title);
+    const safeNotes = escapeHtml(event.notes);
+    const safeId = escapeHtml(event.id || event.tempId);
 
     // Visual distinction for past events
     const isPast = days < 0;
@@ -268,7 +275,7 @@ function renderTimelineItem(event) {
     const countdownColor = isPast ? '#6b7280' : eventColor; // Gray for past, event color for upcoming
 
     return `
-        <div class="flex items-start gap-4 relative group cursor-pointer ${pastClasses}" onclick="handleEventClick('${event.id || event.tempId}')">
+        <div class="flex items-start gap-4 relative group cursor-pointer ${pastClasses}" onclick="handleEventClick('${safeId}')">
             <div class="w-16 text-right pt-3 flex-shrink-0">
                 <div class="text-gray-400 dark:text-gray-500 font-bold text-xl leading-none mb-1">${effectiveDate.toLocaleDateString('en-US', {month:'short', day:'numeric'})}</div>
                 <div class="text-gray-300 dark:text-gray-600 text-sm font-semibold">${effectiveDate.getFullYear()}</div>
@@ -280,12 +287,12 @@ function renderTimelineItem(event) {
                 </div>` : ''}
                 <div class="flex-1">
                     <div class="flex items-center gap-2">
-                        <div class="font-bold text-2xl text-black dark:text-white leading-tight">${event.title}</div>
+                        <div class="font-bold text-2xl text-black dark:text-white leading-tight">${safeTitle}</div>
                         ${event.starred ? `<span class="text-yellow-500 text-lg">⭐</span>` : ''}
                     </div>
                     <div class="flex items-baseline gap-2">
                         ${state.showDays ? `<div class="font-semibold text-xl" style="color: ${countdownColor}">${countdown.long}</div>` : ''}
-                        ${state.showNotes && event.notes ? `<div class="text-sm text-gray-400 italic">${event.notes}</div>` : ''}
+                        ${state.showNotes && event.notes ? `<div class="text-sm text-gray-400 italic">${safeNotes}</div>` : ''}
                     </div>
                 </div>
             </div>
@@ -296,7 +303,7 @@ function renderTimelineItem(event) {
 export function renderCategoryFilterBar() {
     const smart = [{id:'starred', name:'Starred', emoji:'⭐'}, {id:'all', name:'All', emoji:'🌐'}];
     let html = smart.map(f => `<button class="filter-tab px-4 py-2.5 rounded-full text-sm font-semibold min-h-[44px] ${state.selectedCategoryId === f.id ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}" data-category-id="${f.id}">${f.emoji} ${f.name}</button>`).join('');
-    html += state.categories.map(cat => `<button class="filter-tab px-4 py-2.5 rounded-full text-sm font-semibold min-h-[44px] ${state.selectedCategoryId == cat.id ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}" data-category-id="${cat.id}">${cat.emoji} ${cat.name}</button>`).join('');
+    html += state.categories.map(cat => `<button class="filter-tab px-4 py-2.5 rounded-full text-sm font-semibold min-h-[44px] ${state.selectedCategoryId == cat.id ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}" data-category-id="${cat.id}">${escapeHtml(cat.emoji)} ${escapeHtml(cat.name)}</button>`).join('');
     html += `<button id="manageCategoriesBtn" class="px-4 py-2.5 rounded-full text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 whitespace-nowrap min-h-[44px]">+ Edit</button>`;
     categoryFilterBar.innerHTML = html;
 
@@ -312,7 +319,7 @@ export function renderCategoryFilterBar() {
 }
 
 export function renderModalCategoryTabs() {
-    let html = state.categories.map(cat => `<button class="modal-category-tab flex-1 py-1.5 px-3 rounded-lg text-sm font-semibold" data-category-id="${cat.id}">${cat.name}</button>`).join('');
+    let html = state.categories.map(cat => `<button class="modal-category-tab flex-1 py-1.5 px-3 rounded-lg text-sm font-semibold" data-category-id="${cat.id}">${escapeHtml(cat.name)}</button>`).join('');
     html += `<button class="modal-category-tab flex-1 py-1.5 px-3 rounded-lg text-sm font-semibold" data-category-id="none">None</button>`;
     html += `<button id="modalManageCategoriesBtn" class="py-1.5 px-3 rounded-lg text-sm font-semibold bg-gray-200 dark:bg-gray-700 text-black dark:text-white ml-2">⚙️</button>`;
     modalCategoryTabs.innerHTML = html;
@@ -328,7 +335,7 @@ export function renderModalCategoryTabs() {
 export function renderCategoriesList() {
     categoriesListEl.innerHTML = state.categories.map(cat => `
         <div class="flex items-center justify-between bg-gray-50 dark:bg-[#2c2c2e] p-3 rounded-xl border border-gray-100 dark:border-transparent">
-            <div class="flex items-center gap-3"><span>${cat.emoji}</span><span class="text-black dark:text-white">${cat.name}</span></div>
+            <div class="flex items-center gap-3"><span>${escapeHtml(cat.emoji)}</span><span class="text-black dark:text-white">${escapeHtml(cat.name)}</span></div>
             <div class="flex gap-2">
                 <button onclick="editCategory(${cat.id})" class="text-blue-500 font-bold text-sm">Edit</button>
                 <button onclick="deleteCategory(${cat.id})" class="text-red-500 font-bold text-sm">Delete</button>

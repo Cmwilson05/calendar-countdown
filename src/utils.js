@@ -34,6 +34,16 @@ export function calculateDays(dateObjOrString) {
     return Math.ceil(diff / 86400000); // 86400000 = ms in a day
 }
 
+export function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 export function toTitleCase(str) {
     if (!str) return str;
     const smallWords = ['a', 'an', 'the', 'and', 'but', 'or', 'for', 'nor', 'on', 'at', 'to', 'by', 'of', 'in', 'vs'];
